@@ -2,29 +2,16 @@
 
 var camera, scene, renderer, geometry, geometry2, material, mesh, mesh2, ball, cylinder;
 
-function addTableLeg(obj, x, y, z) {
-    'use strict';
-    geometry = new THREE.CubeGeometry(2, 6, 2);
-    mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(x, y - 3, z);
-    obj.add(mesh);
-}
-
-function addTableTop(obj, x, y, z) {
-    'use strict';
-    geometry = new THREE.CubeGeometry(60, 2, 20);
-    mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(x, y, z);
-    obj.add(mesh);
-}
-
-function createCylinder(x, y, z) {
+function createCylinder(x, y, z, height, flag) {
     'use strict';
     cylinder = new THREE.Object3D();
     material = new  THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true });
-    geometry = new THREE.CylinderGeometry(5, 5, 20, 32);
+    geometry = new THREE.CylinderGeometry(2, 2, height, 5);
     mesh = new THREE.Mesh(geometry, material);
     cylinder.add(mesh);
+    cylinder.position.set(y, z, x);
+    if (flag)
+        cylinder.rotateX(Math.PI/2);
     scene.add(cylinder);
 }
 
@@ -88,15 +75,15 @@ function createScene() {
     scene.add(new THREE.AxisHelper(10));
     // createTable(0, 8, 0);
     // createBall(0, 0, 15);
-    createCylinder(0, 0, 0);
+    createCylinder(0, 0, 40, 40, 1); // (Xcoordinate, Ycoordinate, Zcoordinate, cylinderHeight);
 }
 
 function createCamera() {
     'use strict';
     camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
-    camera.position.x = 50;
-    camera.position.y = 50;
-    camera.position.z = 50;
+    camera.position.x = 100;
+    camera.position.y = 0;
+    camera.position.z = 0;
     camera.lookAt(scene.position);
 }
 
