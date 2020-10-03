@@ -1,89 +1,89 @@
-/*global THREE, requestAnimationFrame, console*/
+var horizontal = true, vertical = false;
+var camera, scene, renderer;
+var geometry, material, mesh, cube;
+var lowerMobile, middleMobile, upperMobile, mobile;
+var scale = 5, stdRadius = 2;
 
-var camera, scene, renderer, geometry, geometry2, material, mesh, mesh2, ball, cylinder;
-
-function createCylinder(x, y, z, height, flag) {
+function addCylinder(obj, x, y, z, r1, r2, height, horizontal) {
     'use strict';
-    cylinder = new THREE.Object3D();
-    material = new  THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true });
-    geometry = new THREE.CylinderGeometry(2, 2, height, 5);
-    mesh = new THREE.Mesh(geometry, material);
-    cylinder.add(mesh);
-    cylinder.position.set(y, z, x);
-    if (flag)
-        cylinder.rotateX(Math.PI/2);
-    scene.add(cylinder);
-}
-
-function createBall(x, y, z) {
-    'use strict';
-    ball = new THREE.Object3D();
-    ball.userData = { jumping: true, step: 0 };
-
-    // material = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
     material = new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true });
-    geometry = new THREE.SphereGeometry(4, 10, 10);
-    geometry2 = new THREE.CircleGeometry(8, 32);
-    
-    // geometry = new THREE.TorusGeometry(10, 3);
-    // geometry = new THREE.TorusKnotGeometry(10, 2);
-    // data.radius,
-    // data.tube,
-    // data.tubularSegments,
-    // data.radialSegments,
-    // data.p,
-    // data.q
-    
+    geometry = new THREE.CylinderGeometry(r1, r2, scale * height, 5);
     mesh = new THREE.Mesh(geometry, material);
-    mesh2 = new THREE.Mesh(geometry2, material);
-
-    ball.add(mesh);
-    ball.add(mesh2);
-
-    ball.position.set(x, y, z);
-    ball.rotateX(Math.PI/2);
-    // ball.position.applyEuler(new THREE.Euler( Math.PI/2, 0, 0, 'XYZ' ));
-    // var a = new THREE.Euler( 0, 1, 1.57, 'XYZ' );
-    // var b = new THREE.Vector3( 1, 0, 1 );
-    // ball.position.applyEuler(a);
-    
-    scene.add(ball);
+    mesh.position.set(scale * x, scale * y, scale * z);
+    if (horizontal)
+        mesh.rotateZ(Math.PI/2);
+    obj.add(mesh);
 }
 
-function createTable(x, y, z) {
+function addCube(obj, x, y, z, a, diagonal) {
     'use strict';
-    var table = new THREE.Object3D();
+    material = new  THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true });
+    geometry = new THREE.BoxGeometry(a * scale, a * scale, a * scale);
+    mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(scale * x, scale * y, scale * z);
+    if (diagonal)
+        mesh.rotateZ(Math.PI/4);
+    obj.add(mesh);
+}
 
-    material = new THREE.MeshBasicMaterial({ color: 0xffff00, wireframe: true });
+function createLowerMobile(x, y, z) {
+    'use strict';
+    lowerMobile = new THREE.Object3D();
+    lowerMobile.userData = { 
+        rotateX: 0, 
+        rotateY: 0,
+        rotateZ: 0,
+        step: 0.05
+    };
 
-    addTableTop(table, 0, 0, 0);
-    addTableLeg(table, -25, -1, -8);
-    addTableLeg(table, -25, -1, 8);
-    addTableLeg(table, 25, -1, 8);
-    addTableLeg(table, 25, -1, -8);
+    material = new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true });
 
-    scene.add(table);
+    addCylinder(lowerMobile, 0, -2, 0, stdRadius, stdRadius, 4, vertical);
+    addCylinder(lowerMobile, -3, -4, 0, stdRadius, stdRadius, 10, horizontal);
+    addCylinder(lowerMobile, 2, -6, 0, stdRadius, stdRadius, 4, vertical);
+    addCylinder(lowerMobile, -8, -5, 0, stdRadius, stdRadius, 2, vertical);
+    addCylinder(lowerMobile, -8, -8, 0, scale * stdRadius, scale * stdRadius, 4, vertical);
+    addCylinder(lowerMobile, 6, -8, 0, stdRadius, stdRadius, 16, horizontal);
+    addCylinder(lowerMobile, -2, -9, 0, stdRadius, stdRadius, 2, vertical);
+    addCube(lowerMobile, -2, -11, 0, 2, false);
+    addCylinder(lowerMobile, 14, -9, 0, stdRadius, stdRadius, 2, vertical);
+    addCylinder(lowerMobile, 19, -10, 0, stdRadius, stdRadius, 18, horizontal);
+    addCylinder(lowerMobile, 10, -11, 0, stdRadius, stdRadius, 2, vertical);
+    addCylinder(lowerMobile, 28, -11, 0, stdRadius, stdRadius, 2, vertical);
+    addCube(lowerMobile, 28, -13, 0, 2, false);
+    addCylinder(lowerMobile, 9, -12, 0, stdRadius, stdRadius, 10, horizontal);
+    addCylinder(lowerMobile, 4, -13, 0, stdRadius, stdRadius, 2, vertical);
+    addCylinder(lowerMobile, 4, -16, 0, scale * stdRadius, scale * stdRadius, 4, vertical);
+    addCylinder(lowerMobile, 14, -13, 0, stdRadius, stdRadius, 2, vertical);
+    addCube(lowerMobile, 14, -15, 0, 2, false);
+    scene.add(lowerMobile);
 
-    table.position.x = x;
-    table.position.y = y;
-    table.position.z = z;
+    lowerMobile.position.x = x;
+    lowerMobile.position.y = y;
+    lowerMobile.position.z = z;
 }
 
 function createScene() {
     'use strict';
     scene = new THREE.Scene();
     scene.add(new THREE.AxisHelper(10));
+    createLowerMobile(0, 0, 0);
     // createTable(0, 8, 0);
     // createBall(0, 0, 15);
-    createCylinder(0, 0, 40, 40, 1); // (Xcoordinate, Ycoordinate, Zcoordinate, cylinderHeight);
+    // createCylinder(0, 0, 0, 2, 2, 80, true); // (Xcoordinate, Ycoordinate, Zcoordinate, cylinderHeight);
+    // createCube(0, 0, 0, true);
+    // createBall(0, 0, 0); // (Xcoordinate, Ycoordinate, Zcoordinate, cylinderHeight);
 }
 
 function createCamera() {
     'use strict';
-    camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
-    camera.position.x = 100;
-    camera.position.y = 0;
-    camera.position.z = 0;
+    //camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
+    var width = window.innerWidth;
+    var height = window.innerHeight;
+    camera = new THREE.OrthographicCamera( width / - 2, width / 2, height / 2, height / - 2, 1, 1000); 
+    // camera.position.x = 0;
+    // camera.position.y = 0;
+    // camera.position.z = 0;
     camera.lookAt(scene.position);
 }
 
@@ -121,12 +121,21 @@ function onKeyDown(e) {
             break;
         case 81: // Q/q
             // rodar para a esquerda angulo v1
+            // cylinder.rotation.y += 0.05;
+            lowerMobile.userData.rotateY += lowerMobile.userData.step;
+            break;
         case 87: // W/w
             // rodar para a direita angulo v1
+            lowerMobile.rotation.y -= 0.05;
+            break;
         case 65: // A/a
             // rodar para a esquerda angulo v2
+            lowerMobile.rotation.z += 0.05;
+            break;
         case 67: // C/c
             // rodar para a direita angulo v2
+            lowerMobile.rotation.z -= 0.05;
+            break;
         case 68: // D/d
             // rodar para a esquerda angulo v3
         case 90: // Z/z
@@ -164,13 +173,12 @@ function init() {
 
 function animate() {
     'use strict';
-
     // if (ball.userData.jumping) {
     //     ball.userData.step += 0.04;
     //     ball.position.y = Math.abs(30 * (Math.sin(ball.userData.step)));
     //     ball.position.z = 15 * (Math.cos(ball.userData.step));
     // }
+    // if (lowerMobile.userData.)
     render();
-
     requestAnimationFrame(animate);
 }
