@@ -90,6 +90,7 @@ function createMiddleMobile(x, y, z) {
     middleMobile = new THREE.Object3D();
     material = new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true });
     createLowerMobile(scale * 12, scale * -34, scale * 0);
+    middleMobile.add(lowerMobile);
     addCylinder(middleMobile, 0, -3, 0, stdRadius, stdRadius, 6, vertical); // 2a
     addCylinder(middleMobile, -3, -6, 0, stdRadius, stdRadius, 14, horizontal); // 2b
     scene.add(middleMobile);
@@ -275,11 +276,11 @@ function animate() {
     }
     else if (rotate_v2_r) {
         middleMobile.rotation.y -= .03;
-        lowerMobile.rotation.y -= .03;
+        //lowerMobile.rotation.y -= .03;
     }
     else if (rotate_v2_l) {
         middleMobile.rotation.y += .03;
-        lowerMobile.rotation.y += .03;
+        //lowerMobile.rotation.y += .03;
     }
     else if (rotate_v3_r)
         lowerMobile.rotation.y -= .03;
