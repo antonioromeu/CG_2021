@@ -2,9 +2,9 @@ var horizontal = true, vertical = false;
 var camera, scene, renderer;
 var geometry, material, mesh, cube;
 var lowerMobile, middleMobile, upperMobile, mobile;
-var scale = 6;
-var stdRadius = 2 / scale;
-var cylinderHeight = 4, cylinderRadius = 2;
+var scale = 4;
+var stdRadius = scale / 12;
+var cylinderHeight = 4, cylinderRadius = 1;
 var rotate_v1_r, rotate_v1_l, rotate_v2_r, rotate_v2_l, rotate_v3_r, rotate_v3_l;
 var xs, ys, radius, heights, orientations;
 var leftArrow, topArrow, rightArrow, downArrow;
@@ -78,21 +78,48 @@ function createLowerMobile(x, y, z) {
     addCube(lowerMobile, 14, -25, 0, 2, false); // 11
     */
     
-    scene.add(lowerMobile);
+    // scene.add(lowerMobile);
 
     lowerMobile.position.x = x;
     lowerMobile.position.y = y;
     lowerMobile.position.z = z;
+
+    return lowerMobile;
 }
 
 function createMiddleMobile(x, y, z) {
     'use strict';
     middleMobile = new THREE.Object3D();
     material = new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true });
-    createLowerMobile(scale * 12, scale * -34, scale * 0);
+    createLowerMobile(scale * (-6), scale * (-40), scale * 0);
     middleMobile.add(lowerMobile);
     addCylinder(middleMobile, 0, -3, 0, stdRadius, stdRadius, 6, vertical); // 2a
     addCylinder(middleMobile, -3, -6, 0, stdRadius, stdRadius, 14, horizontal); // 2b
+    addCylinder(middleMobile, 4, -7, 0, stdRadius, stdRadius, 2, vertical); //
+    addCylinder(middleMobile, -10, -10, 0, stdRadius, stdRadius, 8, vertical); //
+    addCylinder(middleMobile, -10, -12, 0, cylinderRadius, cylinderRadius, 4, vertical); // CILINDRO
+    addCylinder(middleMobile, 2, -8, 0, stdRadius, stdRadius, 12, horizontal); //
+    addCylinder(middleMobile, -4, -9, 0, stdRadius, stdRadius, 2, vertical); //
+    addCube(middleMobile, -4, -11, 0, 2, false); // CUBO
+    addCylinder(middleMobile, 8, -14, 0, stdRadius, stdRadius, 12, vertical); //
+    addCylinder(middleMobile, 10, -20, 0, stdRadius, stdRadius, 12, horizontal); //
+    addCylinder(middleMobile, 4, -21, 0, stdRadius, stdRadius, 2, vertical); //
+    addCube(middleMobile, 4, -23, 0, 2, false); // CUBE
+    addCylinder(middleMobile, 16, -23, 0, stdRadius, stdRadius, 6, vertical); //
+    addCylinder(middleMobile, 11, -26, 0, stdRadius, stdRadius, 14, horizontal); //
+    addCylinder(middleMobile, 4, -27, 0, stdRadius, stdRadius, 2, vertical); //
+    addCylinder(middleMobile, 18, -28, 0, stdRadius, stdRadius, 4, vertical); //
+    addCylinder(middleMobile, 18, -32, 0, cylinderRadius, cylinderRadius, 4, vertical); // CILINDRO
+    addCylinder(middleMobile, 6, -28, 0, stdRadius, stdRadius, 12, horizontal); //
+    addCylinder(middleMobile, 0, -29, 0, stdRadius, stdRadius, 2, vertical); //
+    addCube(middleMobile, 0, -31, 0, 2, false); // CUBE
+    addCylinder(middleMobile, 12, -34, 0, stdRadius, stdRadius, 12, vertical); //
+    addCylinder(middleMobile, 5, -40, 0, stdRadius, stdRadius, 22, horizontal); //
+    addCylinder(middleMobile, 16, -41, 0, stdRadius, stdRadius, 2, vertical); //
+    addCube(middleMobile, 16, -43, 0, 2, false); // CUBO
+
+    // middleMobile.add(createLowerMobile(-6, -36, 0));
+
     scene.add(middleMobile);
 
     middleMobile.position.x = x;
