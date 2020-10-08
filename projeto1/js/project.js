@@ -1,13 +1,18 @@
 var horizontal = true, vertical = false;
 var camera, scene, renderer;
 var geometry, material, mesh, cube;
-var lowerMobile, middleMobile, upperMobile, mobile;
+var lowerMobile, middleMobile, upperMobile;
 var scale = 4;
 var stdRadius = scale / 12;
-var cylinderHeight = 4, cylinderRadius = 1;
+var cylinderHeight = scale * 1, cylinderRadius = scale / 4;
 var rotate_v1_r, rotate_v1_l, rotate_v2_r, rotate_v2_l, rotate_v3_r, rotate_v3_l;
-var xs, ys, radius, heights, orientations;
+var xs_l, ys_l, radius_l, heights_l, orientations_l;
+var xs_m, ys_m, radius_m, heights_m, orientations_m;
+var xs_u, ys_u, radius_u, heights_u, orientations_u;
 var leftArrow, topArrow, rightArrow, downArrow;
+var camera1, camera2, camera3;
+var near = 1, far = 1500;
+var i;
 
 function addCylinder(obj, x, y, z, r1, r2, height, horizontal) {
     'use strict';
@@ -31,54 +36,32 @@ function addCube(obj, x, y, z, a, diagonal) {
     obj.add(mesh);
 }
 
+function addPlanet(obj, x, y, z, a) {
+    'use strict';
+    material = new  THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true });
+    geometry = new THREE.SphereGeometry(a * scale, a * scale, a * scale);
+    mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(scale * x, scale * y, scale * z);
+    obj.add(mesh);
+}
+
 function createLowerMobile(x, y, z) {
     'use strict';
     lowerMobile = new THREE.Object3D();
-    /*
-    lowerMobile.userData = { 
-        rotateX: 0, 
-        rotateY: 0,
-        rotateZ: 0,
-        step: 0.05
-    };
-    */
     material = new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true });
-    xs = [0, -3, 2, -8, -8, 6, -2, 14, 19, 10, 28, 9, 4, 14, 4, -2, 28, 14];
-    ys = [-2, -4, -8, -6, -10, -12, -14, -14, -16, -18, -18, -20, -23, -22, -28, -17, -21, -25];
-    radius = [stdRadius, stdRadius, stdRadius, stdRadius, cylinderRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius, cylinderRadius];
-    heights = [4, 10, 8, 4, cylinderHeight, 16, 4, 4, 18, 4, 4, 10, 6, 4, cylinderHeight];
-    orientations = [vertical, horizontal, vertical, vertical, vertical, horizontal, vertical, vertical, horizontal, vertical, vertical, horizontal, vertical, vertical, vertical];
-    var i = 0;
+    //3a 3b 3c 3d 7 3e 3f 3g 3h 3i 3j 3k 3l 3m 9 8 10 11
+    xs_l = [0, -3, 2, -8, -8, 6, -2, 14, 19, 10, 28, 9, 4, 14, 4, -2, 28, 14];
+    ys_l = [-2, -4, -8, -6, -10, -12, -14, -14, -16, -18, -18, -20, -23, -22, -28, -17, -21, -25];
+    radius_l = [stdRadius, stdRadius, stdRadius, stdRadius, cylinderRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius, cylinderRadius];
+    heights_l = [4, 10, 8, 4, cylinderHeight, 16, 4, 4, 18, 4, 4, 10, 6, 4, cylinderHeight];
+    orientations_l = [vertical, horizontal, vertical, vertical, vertical, horizontal, vertical, vertical, horizontal, vertical, vertical, horizontal, vertical, vertical, vertical];
     
-    for (; i < 15; i++) {
-        addCylinder(lowerMobile, xs[i], ys[i], 0, radius[i], radius[i], heights[i], orientations[i]);
+    for (i = 0; i < 15; i++) {
+        addCylinder(lowerMobile, xs_l[i], ys_l[i], 0, radius_l[i], radius_l[i], heights_l[i], orientations_l[i]);
     }
     for (; i < 18; i++) {
-        addCube(lowerMobile, xs[i], ys[i], 0, 2, false);
+        addCube(lowerMobile, xs_l[i], ys_l[i], 0, 2, false);
     }
-
-    /*
-    addCylinder(lowerMobile, 0, -2, 0, stdRadius, stdRadius, 4, vertical); // 3a
-    addCylinder(lowerMobile, -3, -4, 0, stdRadius, stdRadius, 10, horizontal); // 3b
-    addCylinder(lowerMobile, 2, -8, 0, stdRadius, stdRadius, 8, vertical); // 3c
-    addCylinder(lowerMobile, -8, -6, 0, stdRadius, stdRadius, 4, vertical); // 3d
-    addCylinder(lowerMobile, -8, -10, 0, cylinderRadius, cylinderRadius, cylinderHeight, vertical); // 7
-    addCylinder(lowerMobile, 6, -12, 0, stdRadius, stdRadius, 16, horizontal); // 3e
-    addCylinder(lowerMobile, -2, -14, 0, stdRadius, stdRadius, 4, vertical); // 3f
-    addCylinder(lowerMobile, 14, -14, 0, stdRadius, stdRadius, 4, vertical); // 3g
-    addCylinder(lowerMobile, 19, -16, 0, stdRadius, stdRadius, 18, horizontal); // 3h
-    addCylinder(lowerMobile, 10, -18, 0, stdRadius, stdRadius, 4, vertical); // 3i
-    addCylinder(lowerMobile, 28, -18, 0, stdRadius, stdRadius, 4, vertical); // 3j
-    addCylinder(lowerMobile, 9, -20, 0, stdRadius, stdRadius, 10, horizontal); // 3k
-    addCylinder(lowerMobile, 4, -23, 0, stdRadius, stdRadius, 6, vertical); // 3l
-    addCylinder(lowerMobile, 14, -22, 0, stdRadius, stdRadius, 4, vertical); // 3m
-    addCylinder(lowerMobile, 4, -28, 0, cylinderRadius, cylinderRadius, cylinderHeight, vertical); // 9
-    addCube(lowerMobile, -2, -17, 0, 2, false); // 8
-    addCube(lowerMobile, 28, -21, 0, 2, false); // 10
-    addCube(lowerMobile, 14, -25, 0, 2, false); // 11
-    */
-    
-    // scene.add(lowerMobile);
 
     lowerMobile.position.x = x;
     lowerMobile.position.y = y;
@@ -93,56 +76,73 @@ function createMiddleMobile(x, y, z) {
     material = new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true });
     createLowerMobile(scale * (-6), scale * (-40), scale * 0);
     middleMobile.add(lowerMobile);
-    addCylinder(middleMobile, 0, -3, 0, stdRadius, stdRadius, 6, vertical); // 2a
-    addCylinder(middleMobile, -3, -6, 0, stdRadius, stdRadius, 14, horizontal); // 2b
-    addCylinder(middleMobile, 4, -7, 0, stdRadius, stdRadius, 2, vertical); //
-    addCylinder(middleMobile, -10, -10, 0, stdRadius, stdRadius, 8, vertical); //
-    addCylinder(middleMobile, -10, -12, 0, cylinderRadius, cylinderRadius, 4, vertical); // CILINDRO
-    addCylinder(middleMobile, 2, -8, 0, stdRadius, stdRadius, 12, horizontal); //
-    addCylinder(middleMobile, -4, -9, 0, stdRadius, stdRadius, 2, vertical); //
-    addCube(middleMobile, -4, -11, 0, 2, false); // CUBO
-    addCylinder(middleMobile, 8, -14, 0, stdRadius, stdRadius, 12, vertical); //
-    addCylinder(middleMobile, 10, -20, 0, stdRadius, stdRadius, 12, horizontal); //
-    addCylinder(middleMobile, 4, -21, 0, stdRadius, stdRadius, 2, vertical); //
-    addCube(middleMobile, 4, -23, 0, 2, false); // CUBE
-    addCylinder(middleMobile, 16, -23, 0, stdRadius, stdRadius, 6, vertical); //
-    addCylinder(middleMobile, 11, -26, 0, stdRadius, stdRadius, 14, horizontal); //
-    addCylinder(middleMobile, 4, -27, 0, stdRadius, stdRadius, 2, vertical); //
-    addCylinder(middleMobile, 18, -28, 0, stdRadius, stdRadius, 4, vertical); //
-    addCylinder(middleMobile, 18, -32, 0, cylinderRadius, cylinderRadius, 4, vertical); // CILINDRO
-    addCylinder(middleMobile, 6, -28, 0, stdRadius, stdRadius, 12, horizontal); //
-    addCylinder(middleMobile, 0, -29, 0, stdRadius, stdRadius, 2, vertical); //
-    addCube(middleMobile, 0, -31, 0, 2, false); // CUBE
-    addCylinder(middleMobile, 12, -34, 0, stdRadius, stdRadius, 12, vertical); //
-    addCylinder(middleMobile, 5, -40, 0, stdRadius, stdRadius, 22, horizontal); //
-    addCylinder(middleMobile, 16, -41, 0, stdRadius, stdRadius, 2, vertical); //
-    addCube(middleMobile, 16, -43, 0, 2, false); // CUBO
+    
+    xs_m = [0, -3, 4, -10, -10, 2, -4, 8, 10, 4, 16, 11, 4, 18, 18, 6, 0, 12, 5, 16, -4, 4, 16, 0];
+    ys_m = [-3, -6, -7, -10, -12, -8, -9, -14, -20, -21, -23, -26, -27, -28, -32, -28, -29, -34, -40, -41, -11, -23, -43, -31];
+    radius_m = [stdRadius, stdRadius, stdRadius, stdRadius, cylinderRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius, cylinderRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius];
+    heights_m = [6, 14, 2, 8, 4, 12, 2, 12, 12, 2, 6, 14, 2, 4, 4, 12, 2, 12, 22, 2];
+    orientations_m = [vertical, horizontal, vertical, vertical, vertical, horizontal, vertical, vertical, horizontal, vertical, vertical, horizontal, vertical, vertical, vertical, horizontal, vertical, vertical, horizontal, vertical];
 
-    // middleMobile.add(createLowerMobile(-6, -36, 0));
-
-    scene.add(middleMobile);
+    for (i = 0; i < 20; i++) {
+        addCylinder(middleMobile, xs_m[i], ys_m[i], 0, radius_m[i], radius_m[i], heights_m[i], orientations_m[i]);
+    }
+    for (; i < 24; i++) {
+        addCube(middleMobile, xs_m[i], ys_m[i], 0, 2, false);
+    }
 
     middleMobile.position.x = x;
     middleMobile.position.y = y;
     middleMobile.position.z = z;
+
+    return middleMobile;
+}
+
+function createUpperMobile(x, y, z) {
+    'use strict';
+    upperMobile = new THREE.Object3D();
+    material = new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true });
+    createMiddleMobile(scale * (-24), scale * (-4), scale * 0);
+    upperMobile.add(middleMobile);
+    
+    xs_u = [0, -7, 10, 8, 4, 12, 5, 2, 8];
+    ys_u = [-2, -4, -6, -8, -10, -18, -12, -25, -15];
+    radius_u = [stdRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius];
+    heights_u = [4, 34, 4, 8, 4, 20, 6, 26, 6];
+    orientations_u = [vertical, horizontal, vertical, horizontal, vertical, vertical, horizontal, vertical, vertical];
+
+    for (i = 0; i < 9; i++) {
+        addCylinder(upperMobile, xs_u[i], ys_u[i], 0, radius_u[i], radius_u[i], heights_u[i], orientations_u[i]);
+    }
+
+    //estrela
+    addCube(upperMobile, 8, -19, 0, 2, false);
+    addCube(upperMobile, 8, -19, 0, 2, true);
+
+    //planeta
+    addPlanet(upperMobile, 12, -30, 0, 3);
+
+    upperMobile.position.x = x;
+    upperMobile.position.y = y;
+    upperMobile.position.z = z;
+    
+    scene.add(upperMobile);
 }
 
 function createScene() {
     'use strict';
     scene = new THREE.Scene();
     scene.add(new THREE.AxisHelper(10));
-    createMiddleMobile(0, 0, 0);
+    createUpperMobile(0, 0, 0);
 }
 
 function createCamera() {
     'use strict';
-    //camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
     var width = window.innerWidth;
     var height = window.innerHeight;
-    camera = new THREE.OrthographicCamera( width / - 2, width / 2, height / 2, height / - 2, 1, 1000); 
-    // camera.position.x = 0;
-    // camera.position.y = 0;
-    // camera.position.z = 0;
+    camera = new THREE.OrthographicCamera(width / - 2, width / 2, height / 2, height / - 2, near, far);
+    camera.position.x = 150;
+    camera.position.y = 0;
+    camera.position.z = 150;
     camera.lookAt(scene.position);
 }
 
@@ -170,20 +170,20 @@ function onKeyDown(e) {
         case 40: // down arrow
             downArrow = true;
             break;
-        case 49: // 1 top
-        case 97: // 1 side
-            // camara frontal
+        case 49: // 1 frontal view
+        case 97: // 1 frontal view
+            camera1 = true;
             break;
-        case 50: // 2 top
-        case 98: // 2 side
-            // camara topo
+        case 50: // 2 top view
+        case 98: // 2 top view
+            camera2 = true;
             break;
-        case 51: // 3 top
-        case 99: // 3 side
-            // camara lateral
+        case 51: // 3 side view
+        case 99: // 3 side view
+            camera3 = true;
             break;
-        case 52: // 4 top
-        case 100: // 4 side
+        case 52: // 4 alternate mesh
+        case 100: // 4 alternate mesh
             scene.traverse(function(node) {
                 if (node instanceof THREE.Mesh) {
                     node.material.wireframe = !node.material.wireframe;
@@ -234,11 +234,23 @@ function onKeyUp(e) {
         case 40: // down arrow
             downArrow = false;
             break;
+        case 49: // 1 frontal view
+        case 97: // 1 frontal view
+            camera1 = false;
+            break;
+        case 50: // 2 top view
+        case 98: // 2 top view
+            camera2 = false;
+            break;
+        case 51: // 3 side view
+        case 99: // 3 side view
+            camera3 = false;
+            break;
         case 81: // Q/q --- rodar para a esquerda angulo v1
-            //rotate_v1_l = false;
+            rotate_v1_l = false;
             break;
         case 87: // W/w --- rodar para a direita angulo v1
-            //rotate_v1_r = false;
+            rotate_v1_r = false;
             break;
         case 65: // A/a --- rodar para a esquerda angulo v2
             rotate_v2_l = false;
@@ -279,6 +291,7 @@ function init() {
 function animate() {
     'use strict';
 
+    /*
     if (leftArrow)
         middleMobile.position.x--;
     
@@ -290,24 +303,39 @@ function animate() {
 
     if (downArrow)
         middleMobile.position.z--;
+    */
+    
+    if (camera1) {
+        camera.position.x = 150;
+        camera.position.y = 0;
+        camera.position.z = 150;
+    }
+
+    else if (camera2) {
+        camera.position.x = 0;
+        camera.position.y = 150;
+        camera.position.z = 0;
+    }
+
+    else if (camera3) {
+        camera.position.x = 200;
+        camera.position.y = 0;
+        camera.position.z = 0;
+    }
+
+    camera.lookAt(scene.position);
 
     if (rotate_v1_r) {
         upperMobile.rotation.y -= .03;
-        middleMobile.rotation.y -= .03;
-        lowerMobile.rotation.y -= .03;
     }
     else if (rotate_v1_l) {
         upperMobile.rotation.y += .03;
-        middleMobile.rotation.y += .03;
-        lowerMobile.rotation.y += .03;
     }
     else if (rotate_v2_r) {
         middleMobile.rotation.y -= .03;
-        //lowerMobile.rotation.y -= .03;
     }
     else if (rotate_v2_l) {
         middleMobile.rotation.y += .03;
-        //lowerMobile.rotation.y += .03;
     }
     else if (rotate_v3_r)
         lowerMobile.rotation.y -= .03;
