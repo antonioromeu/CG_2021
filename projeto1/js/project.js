@@ -1,8 +1,8 @@
 var horizontal = true, vertical = false;
 var camera, scene, renderer;
-var geometry, material, mesh, cube;
+var geometry, mesh, cube;
 var lowerMobile, middleMobile, upperMobile;
-var scale = 4;
+var scale = 5;
 var stdRadius = scale / 12;
 var cylinderHeight = scale * 1, cylinderRadius = scale / 4;
 var rotate_v1_r, rotate_v1_l, rotate_v2_r, rotate_v2_l, rotate_v3_r, rotate_v3_l;
@@ -13,10 +13,10 @@ var leftArrow, topArrow, rightArrow, downArrow;
 var camera1, camera2, camera3;
 var near = 1, far = 1500;
 var i;
+var material = new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true });
 
 function addCylinder(obj, x, y, z, r1, r2, height, horizontal) {
     'use strict';
-    material = new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true });
     geometry = new THREE.CylinderGeometry(scale *  r1, scale * r2, scale * height, 16);
     mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(scale * x, scale * y, scale * z);
@@ -27,7 +27,6 @@ function addCylinder(obj, x, y, z, r1, r2, height, horizontal) {
 
 function addCube(obj, x, y, z, a, diagonal) {
     'use strict';
-    material = new  THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true });
     geometry = new THREE.BoxGeometry(a * scale, a * scale, a * scale);
     mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(scale * x, scale * y, scale * z);
@@ -38,7 +37,6 @@ function addCube(obj, x, y, z, a, diagonal) {
 
 function addPlanet(obj, x, y, z, a) {
     'use strict';
-    material = new  THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true });
     geometry = new THREE.SphereGeometry(a * scale, a * scale, a * scale);
     mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(scale * x, scale * y, scale * z);
@@ -48,7 +46,6 @@ function addPlanet(obj, x, y, z, a) {
 function createLowerMobile(x, y, z) {
     'use strict';
     lowerMobile = new THREE.Object3D();
-    material = new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true });
     //3a 3b 3c 3d 7 3e 3f 3g 3h 3i 3j 3k 3l 3m 9 8 10 11
     xs_l = [0, -3, 2, -8, -8, 6, -2, 14, 19, 10, 28, 9, 4, 14, 4, -2, 28, 14];
     ys_l = [-2, -4, -8, -6, -10, -12, -14, -14, -16, -18, -18, -20, -23, -22, -28, -17, -21, -25];
@@ -73,7 +70,6 @@ function createLowerMobile(x, y, z) {
 function createMiddleMobile(x, y, z) {
     'use strict';
     middleMobile = new THREE.Object3D();
-    material = new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true });
     createLowerMobile(scale * (-6), scale * (-40), scale * 0);
     middleMobile.add(lowerMobile);
     
@@ -100,7 +96,6 @@ function createMiddleMobile(x, y, z) {
 function createUpperMobile(x, y, z) {
     'use strict';
     upperMobile = new THREE.Object3D();
-    material = new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true });
     createMiddleMobile(scale * (-24), scale * (-4), scale * 0);
     upperMobile.add(middleMobile);
     
@@ -132,7 +127,7 @@ function createScene() {
     'use strict';
     scene = new THREE.Scene();
     scene.add(new THREE.AxisHelper(10));
-    createUpperMobile(0, 0, 0);
+    createUpperMobile(0, 100, 0);
 }
 
 function createCamera() {
@@ -140,9 +135,9 @@ function createCamera() {
     var width = window.innerWidth;
     var height = window.innerHeight;
     camera = new THREE.OrthographicCamera(width / - 2, width / 2, height / 2, height / - 2, near, far);
-    camera.position.x = 150;
+    camera.position.x = 0;
     camera.position.y = 0;
-    camera.position.z = 150;
+    camera.position.z = 200;
     camera.lookAt(scene.position);
 }
 
@@ -184,11 +179,7 @@ function onKeyDown(e) {
             break;
         case 52: // 4 alternate mesh
         case 100: // 4 alternate mesh
-            scene.traverse(function(node) {
-                if (node instanceof THREE.Mesh) {
-                    node.material.wireframe = !node.material.wireframe;
-                }
-            });
+            material.wireframe = !material.wireframe;
             break;
         case 81: // Q/q --- rodar para a esquerda angulo v1
             rotate_v1_l = true;
@@ -306,19 +297,19 @@ function animate() {
     */
     
     if (camera1) {
-        camera.position.x = 150;
+        camera.position.x = 0;
         camera.position.y = 0;
-        camera.position.z = 150;
+        camera.position.z = 200;
     }
 
     else if (camera2) {
         camera.position.x = 0;
-        camera.position.y = 150;
+        camera.position.y = 200;
         camera.position.z = 0;
     }
 
     else if (camera3) {
-        camera.position.x = 200;
+        camera.position.x = 2000;
         camera.position.y = 0;
         camera.position.z = 0;
     }
