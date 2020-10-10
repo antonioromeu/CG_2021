@@ -1,46 +1,37 @@
-//const THREE = require("./three");
-
-var horizontal = true, vertical = false;
 var camera, scene, renderer;
 var geometry, mesh, cube;
-var lowerMobile, middleMobile, upperMobile;
 var scale = 5;
-var stdRadius = scale / 12;
-var cylinderHeight = scale * 4, cylinderRadius = scale * 2;
-var cubeSide = scale * 2;
-var tallCubeSideHeight = scale * 4;
 var rotate_v1_r, rotate_v1_l, rotate_v2_r, rotate_v2_l, rotate_v3_r, rotate_v3_l;
 var leftArrow, topArrow, rightArrow, downArrow;
 var camera1, camera2, camera3;
 var near = 1, far = 1500;
-var i;
 var material = new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true });
 var h0, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10;
 var h11, h12, h13, h14, h15, h16, h17, h18, h19, h20;
 var h21, h22, h23, h24, h25, h26, h27, h28, h29, h30;
 var h31, h32, h33, h34, h35, h36, h37, h38, h39, h40;
 var cu0, cu1, cu2, cu3, cu4;
-var cy0, cy1, cy2, cy3, cy4, cy5;
+var cy0, cy1, cy2, cy3, cy4, cy5, cy6;
 var p0, p1, p2;
 var t0;
-var e0, e1;
+var e0, e1, e2;
 var g0, g1, g2, g3, g4, g5, g6, g7, g8, g9, g10;
 var g10, g11, g12, g13, g14, g15, g16, g17, g18, g19;
 var g20, g21, g22, g23, g24, g25, g26, g27, g28, g29;
 var g30, g31, g32, g33, g34, g35, g36, g37, g38, g39, g40;
 var g41, g42;
 
-var paralelipipedo = new THREE.BoxGeometry(2 * scale, 2 * scale, 4 * scale);
+var paralelipipedo = new THREE.BoxGeometry(2 * scale, 4 * scale, 2 * scale);
 var cubo = new THREE.BoxGeometry(2 * scale, 2 * scale, 2 * scale);
-var cilindro = new THREE.CylinderGeometry(2 * scale, 2 * scale, 4 * scale);
-var tetraedro = new THREE.TetrahedronGeometry(3 * scale);
+var cilindro = new THREE.CylinderGeometry(2 * scale, 2 * scale, 4 * scale, 32);
+var tetraedro = new THREE.OctahedronGeometry(3 * scale);
 var esfera = new THREE.SphereGeometry(2 * scale, 32, 32);
 
 function haste(height) {
     return new THREE.CylinderGeometry(1/12 * scale, 1/12 * scale, height * scale);
 }
 
-function mobile(x, y, z) {
+function mobile() {
     'use strict';
 
     cu4 = new THREE.Mesh(new THREE.BoxGeometry(4 * scale, 4 * scale, 4 * scale), material);
@@ -55,9 +46,9 @@ function mobile(x, y, z) {
     g40.add(h39);
     g40.add(g42);
     g40.rotateZ(-Math.PI/2);
-    g40.position.set(3 * scale, -3 * scale, 0 * scale);
+    g40.position.set(-3 * scale, -3 * scale, 0 * scale);
 
-    cy5 = new THREE.Mesh(cilindro, material);
+    cy5 = new THREE.Mesh(new THREE.CylinderGeometry(3 * scale, 3 * scale, 1/12 * scale), material);
     e1 = new THREE.Mesh(esfera, material);
     g41 = new THREE.Object3D();
     g41.add(cy5);
@@ -69,7 +60,7 @@ function mobile(x, y, z) {
     g39.add(h38);
     g39.add(g41);
     g39.rotateZ(-Math.PI/2);
-    g39.position.set(-3 * scale, -13 * scale, 0 * scale);
+    g39.position.set(-13 * scale, 3 * scale, 0 * scale);
 
     h37 = new THREE.Mesh(haste(6), material);
     g37 = new THREE.Object3D();
@@ -84,7 +75,7 @@ function mobile(x, y, z) {
     g35.add(h35);
     g35.add(g37);
     g35.rotateZ(-Math.PI/2);
-    g35.position.set(-4 * scale, -2 * scale, 0 * scale);
+    g35.position.set(-2 * scale, 4 * scale, 0 * scale);
     
     e0 = new THREE.Mesh(esfera, material);
     cy4 = new THREE.Mesh(new THREE.CylinderGeometry(3 * scale, 3 * scale, 1/12 * scale), material);
@@ -98,7 +89,7 @@ function mobile(x, y, z) {
     g36.add(h36);
     g36.add(g38);
     g36.rotateZ(-Math.PI/2);
-    g36.position.set(4 * scale, -10 * scale, 0 * scale);
+    g36.position.set(-10 * scale, -4 * scale, 0 * scale);
 
     h34 = new THREE.Mesh(haste(8), material);
     g34 = new THREE.Object3D();
@@ -109,8 +100,8 @@ function mobile(x, y, z) {
     g34.position.set(-2 * scale, -2 * scale, 0 * scale);
     
     p2 = new THREE.Mesh(paralelipipedo, material);
-    p2.position.set(0, -4, 0);
-    h32 = new THREE.Mesh(haste(6), material);
+    p2.position.set(0 * scale, -4 * scale, 0 * scale);
+    h32 = new THREE.Mesh(haste(4), material);
     g33 = new THREE.Object3D();
     g33.add(p2);
     g33.add(h32);
@@ -123,32 +114,32 @@ function mobile(x, y, z) {
     g32 = new THREE.Object3D();
     g32.add(h31);
     g32.add(cy3);
-    g32.position.set(2 * scale, 5 * scale, 0 * scale);
     g32.rotateZ(-Math.PI/2);
-    
+    g32.position.set(-3 * scale, 5 * scale, 0 * scale);
+
     h30 = new THREE.Mesh(haste(10), material);
     g31 = new THREE.Object3D();
     g31.add(g33);
     g31.add(h30);
     g31.add(g32);
     g31.rotateZ(Math.PI/2);
-    g31.position.set(3 * scale, -5 * scale, 0 * scale);
+    g31.position.set(-1 * scale, -2 * scale, 0 * scale);
     
     h28 = new THREE.Mesh(haste(4), material);
     g30 = new THREE.Object3D();
     g30.add(h28);
     g30.add(g31);
     g30.rotateZ(-Math.PI/2);
-    g30.position.set(-9 * scale, -2 * scale, 0 * scale);
+    g30.position.set(-2 * scale, 9 * scale, 0 * scale);
 
     cu3 = new THREE.Mesh(cubo, material);
     cu3.position.set(0 * scale, -3 * scale, 0 * scale);
     h29 = new THREE.Mesh(haste(4), material);
-    g29 = new THREE.Object3D();
+    g29 = new THREE.Object3D(); 
     g29.add(h29);
     g29.add(cu3);
     g29.rotateZ(-Math.PI/2);
-    g29.position.set(9 * scale, -2 * scale, 0 * scale);
+    g29.position.set(-2 * scale, -9 * scale, 0 * scale);
     
     h27 = new THREE.Mesh(haste(18), material);
     g28 = new THREE.Object3D();
@@ -163,7 +154,7 @@ function mobile(x, y, z) {
     g27.add(g28);
     g27.add(h26);
     g27.rotateZ(-Math.PI/2);
-    g27.position.set(8 * scale, -2 * scale, 0 * scale);
+    g27.position.set(-2 * scale, -8 * scale, 0 * scale);
 
     p1 = new THREE.Mesh(paralelipipedo, material);
     p1.position.set(0 * scale, -4 * scale, 0 * scale);
@@ -172,27 +163,31 @@ function mobile(x, y, z) {
     g26.add(p1);
     g26.add(h25);
     g26.rotateZ(-Math.PI/2);
-    g26.position.set(-8 * scale, -2 * scale, 0 * scale);
+    g26.position.set(-2 * scale, 8 * scale, 0 * scale);
     
     h24 = new THREE.Mesh(haste(16), material);
     g25 = new THREE.Object3D();
     g25.add(h24);
     g25.add(g26);
     g25.add(g27);
+    g25.rotateZ(Math.PI/2);
+    g25.position.set(4 * scale, -4 * scale, 0 * scale);
 
     cy2 = new THREE.Mesh(cilindro, material);
     cy2.position.set(0 * scale, -5 * scale, 0 * scale);
     h22 = new THREE.Mesh(haste(6), material);
     g23 = new THREE.Object3D();
+    g23.add(h22);
+    g23.add(cy2);
     g23.rotateZ(-Math.PI/2);
-    g23.position.set(-5 * scale, -3 * scale, 0 * scale);
+    g23.position.set(-3 * scale, 5 * scale, 0 * scale);
     
     h23 = new THREE.Mesh(haste(8), material);
     g24 = new THREE.Object3D();
     g24.add(h23);
     g24.add(g25);
     g24.rotateZ(-Math.PI/2);
-    g24.position.set(5 * scale, -4 * scale, 0 * scale);
+    g24.position.set(-4 * scale, -5 * scale, 0 * scale);
 
     h21 = new THREE.Mesh(haste(10), material);
     g22 = new THREE.Object3D();
@@ -209,19 +204,14 @@ function mobile(x, y, z) {
     g21.add(h19);
     g21.add(cu2);
     g21.rotateZ(-Math.PI/2);
-    g21.position.set(11 * scale, -1 * scale, 0 * scale);
+    g21.position.set(-1 * scale, -11 * scale, 0 * scale);
 
     h20 = new THREE.Mesh(haste(4), material);
     g20 = new THREE.Object3D();
     g20.add(h20);
     g20.add(g22);
-    // g20.rotateY(v3);
     g20.rotateZ(-Math.PI/2);
-    g20.position.set(-11 * scale, -2 * scale, 0 * scale);
-
-    // ------------------------------
-    // edge of lower mobile
-    // ------------------------------
+    g20.position.set(-2 * scale, 11 * scale, 0 * scale);
 
     h18 = new THREE.Mesh(haste(22), material);
     g19 = new THREE.Object3D();
@@ -236,18 +226,20 @@ function mobile(x, y, z) {
     g18.add(h17);
     g18.add(g19);
     g18.rotateZ(-Math.PI/2);
-    g18.position.set(6 * scale, -6 * scale, 0 * scale);
+    g18.position.set(-6 * scale, -6 * scale, 0 * scale);
 
     h16 = new THREE.Mesh(haste(2), material);
     g17 = new THREE.Object3D();
     cu1 = new THREE.Mesh(cubo, material);
+    cu1.position.set(0 * scale, -2 * scale, 0 * scale);
     g17.add(h16);
     g17.add(cu1);
     g17.rotateZ(-Math.PI/2);
-    g17.position.set(-6 * scale, -1 * scale, 0 * scale);
+    g17.position.set(-1 * scale, 6 * scale, 0 * scale);
     
     h15 = new THREE.Mesh(haste(12), material);
     g16 = new THREE.Object3D();
+    g16.add(h15);
     g16.add(g17);
     g16.add(g18);
     g16.rotateZ(Math.PI/2);
@@ -258,7 +250,7 @@ function mobile(x, y, z) {
     g14.add(g16);
     g14.add(h13);
     g14.rotateZ(-Math.PI/2);
-    g14.position.set(-7 * scale, -1 * scale, 0 * scale);
+    g14.position.set(-1 * scale, 7 * scale, 0 * scale);
     
     cy1 = new THREE.Mesh(cilindro, material);
     cy1.position.set(0 * scale, -4 * scale, 0 * scale);
@@ -266,6 +258,8 @@ function mobile(x, y, z) {
     g15 = new THREE.Object3D();
     g15.add(h14);
     g15.add(cy1);
+    g15.rotateZ(-Math.PI/2);
+    g15.position.set(-2 * scale, -7 * scale, 0 * scale);
 
     h12 = new THREE.Mesh(haste(14), material);
     g13 = new THREE.Object3D();
@@ -280,7 +274,7 @@ function mobile(x, y, z) {
     g12.add(h11);
     g12.add(g13);
     g12.rotateZ(-Math.PI/2);
-    g12.position.set(6 * scale, -3 * scale, 0 * scale);
+    g12.position.set(-3 * scale, -6 * scale, 0 * scale);
 
     cu0 = new THREE.Mesh(cubo, material);
     cu0.position.set(0 * scale, -2 * scale, 0 * scale);
@@ -289,20 +283,22 @@ function mobile(x, y, z) {
     g11.add(cu0);
     g11.add(h10);
     g11.rotateZ(-Math.PI/2);
-    g11.position.set(-6 * scale, -1 * scale, 0 * scale);
+    g11.position.set(-1 * scale, 6 * scale, 0 * scale);
 
     h9 = new THREE.Mesh(haste(12), material);
     g10 = new THREE.Object3D();
     g10.add(g11);
     g10.add(g12);
     g10.add(h9);
+    g10.rotateZ(Math.PI/2);
+    g10.position.set(2 * scale, -6 * scale, 0 * scale);
     
     h8 = new THREE.Mesh(haste(12), material);
     g9 = new THREE.Object3D();
     g9.add(h8);
     g9.add(g10);
     g9.rotateZ(-Math.PI/2);
-    g9.position.set(6 * scale, -6 * scale, 0 * scale);
+    g9.position.set(-6 * scale, -6 * scale, 0 * scale);
         
     p0 = new THREE.Mesh(paralelipipedo, material);
     p0.position.set(0 * scale, -3 * scale, 0 * scale);
@@ -311,7 +307,7 @@ function mobile(x, y, z) {
     g8.add(p0);
     g8.add(h7);
     g8.rotateZ(-Math.PI/2);
-    g8.position.set(-6 * scale, -1 * scale, 0 * scale);
+    g8.position.set(-1 * scale, 6 * scale, 0 * scale);
     
     h6 = new THREE.Mesh(haste(12), material);
     g7 = new THREE.Object3D();
@@ -326,7 +322,7 @@ function mobile(x, y, z) {
     g6.add(h5);
     g6.add(g7);
     g6.rotateZ(-Math.PI/2);
-    g6.position.set(7 * scale, -1 * scale, 0 * scale);
+    g6.position.set(-1 * scale, -7 * scale, 0 * scale);
 
     cy0 = new THREE.Mesh(cilindro, material);
     cy0.position.set(0 * scale, -7 * scale, 0 * scale);
@@ -335,7 +331,7 @@ function mobile(x, y, z) {
     g5.add(cy0);
     g5.add(h4);
     g5.rotateZ(-Math.PI/2);
-    g5.position.set(-7 * scale, -5 * scale, 0 * scale);
+    g5.position.set(-5 * scale, 7 * scale, 0 * scale);
     
     h3 = new THREE.Mesh(haste(14), material);
     g4 = new THREE.Object3D();
@@ -350,7 +346,7 @@ function mobile(x, y, z) {
     g3.add(h33);
     g3.add(g34);
     g3.rotateZ(-Math.PI/2);
-    g3.position.set(17 * scale, -2 * scale, 0 * scale);
+    g3.position.set(-2 * scale, -17 * scale, 0 * scale);
 
     h2 = new THREE.Mesh(haste(6), material);
     g2 = new THREE.Object3D();
@@ -358,7 +354,7 @@ function mobile(x, y, z) {
     g2.add(g3);
     g2.add(g4);
     g2.rotateZ(-Math.PI/2);
-    g2.position.set(-17 * scale, -3 * scale, 0 * scale);
+    g2.position.set(-3 * scale, 17 * scale, 0 * scale);
     
     h1 = new THREE.Mesh(haste(34), material);
     g1 = new THREE.Object3D();
@@ -374,18 +370,14 @@ function mobile(x, y, z) {
     g0.add(g1);
     g0.position.set(0 * scale, 35 * scale, 0 * scale);
 
-    // ------------------------------
-    // edge of upper mobile
-    // ------------------------------
-
-    scene.add(g31);
+    scene.add(g0);
 }
 
 function createScene() {
     'use strict';
     scene = new THREE.Scene();
     scene.add(new THREE.AxisHelper(10));
-    mobile(0, 0, 0);
+    mobile();
 }
 
 function createCamera() {
@@ -540,20 +532,18 @@ function init() {
 function animate() {
     'use strict';
 
-    /*
     if (leftArrow)
-        middleMobile.position.x--;
+        g0.position.x--;
     
     if (topArrow)
-        middleMobile.position.z++;
+        g0.position.z++;
 
     if (rightArrow)
-        middleMobile.position.x++;
+        g0.position.x++;
 
     if (downArrow)
-        middleMobile.position.z--;
-    */
-    
+        g0.position.z--;
+
     if (camera1) {
         camera.position.x = 0;
         camera.position.y = 0;
@@ -567,29 +557,25 @@ function animate() {
     }
 
     else if (camera3) {
-        camera.position.x = 2000;
+        camera.position.x = 200;
         camera.position.y = 0;
         camera.position.z = 0;
     }
 
     camera.lookAt(scene.position);
 
-    if (rotate_v1_r) {
+    if (rotate_v1_r)
         g0.rotation.y -= .03;
-    }
-    else if (rotate_v1_l) {
+    if (rotate_v1_l)
         g0.rotation.y += .03;
-    }
-    else if (rotate_v2_r) {
-        g8.rotation.y -= .03;
-    }
-    else if (rotate_v2_l) {
-        g8.rotation.y += .03;
-    }
-    else if (rotate_v3_r)
-        g20.rotation.y -= .03;
-    else if (rotate_v3_l)
-        g20.rotation.y += .03;
+    if (rotate_v2_r)
+        g2.rotation.x -= .03;
+    if (rotate_v2_l)
+        g2.rotation.x += .03;
+    if (rotate_v3_r)
+        g20.rotation.x -= .03;
+    if (rotate_v3_l)
+        g20.rotation.x += .03;
     
     render();
     requestAnimationFrame(animate);
