@@ -1,133 +1,391 @@
+//const THREE = require("./three");
+
 var horizontal = true, vertical = false;
 var camera, scene, renderer;
 var geometry, mesh, cube;
 var lowerMobile, middleMobile, upperMobile;
 var scale = 5;
 var stdRadius = scale / 12;
-var cylinderHeight = scale * 1, cylinderRadius = scale / 4;
+var cylinderHeight = scale * 4, cylinderRadius = scale * 2;
+var cubeSide = scale * 2;
+var tallCubeSideHeight = scale * 4;
 var rotate_v1_r, rotate_v1_l, rotate_v2_r, rotate_v2_l, rotate_v3_r, rotate_v3_l;
-var xs_l, ys_l, radius_l, heights_l, orientations_l;
-var xs_m, ys_m, radius_m, heights_m, orientations_m;
-var xs_u, ys_u, radius_u, heights_u, orientations_u;
 var leftArrow, topArrow, rightArrow, downArrow;
 var camera1, camera2, camera3;
 var near = 1, far = 1500;
 var i;
 var material = new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true });
+var h0, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10;
+var h11, h12, h13, h14, h15, h16, h17, h18, h19, h20;
+var h21, h22, h23, h24, h25, h26, h27, h28, h29, h30;
+var h31, h32, h33, h34, h35, h36, h37, h38, h39, h40;
+var cu0, cu1, cu2, cu3, cu4;
+var cy0, cy1, cy2, cy3, cy4, cy5;
+var p0, p1, p2;
+var t0;
+var e0, e1;
+var g0, g1, g2, g3, g4, g5, g6, g7, g8, g9, g10;
+var g10, g11, g12, g13, g14, g15, g16, g17, g18, g19;
+var g20, g21, g22, g23, g24, g25, g26, g27, g28, g29;
+var g30, g31, g32, g33, g34, g35, g36, g37, g38, g39, g40;
+var g41, g42;
 
-function addCylinder(obj, x, y, z, r1, r2, height, horizontal) {
-    'use strict';
-    geometry = new THREE.CylinderGeometry(scale *  r1, scale * r2, scale * height, 16);
-    mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(scale * x, scale * y, scale * z);
-    if (horizontal)
-        mesh.rotateZ(Math.PI/2);
-    obj.add(mesh);
+var paralelipipedo = new THREE.BoxGeometry(2 * scale, 2 * scale, 4 * scale);
+var cubo = new THREE.BoxGeometry(2 * scale, 2 * scale, 2 * scale);
+var cilindro = new THREE.CylinderGeometry(2 * scale, 2 * scale, 4 * scale);
+var tetraedro = new THREE.TetrahedronGeometry(3 * scale);
+var esfera = new THREE.SphereGeometry(2 * scale, 32, 32);
+
+function haste(height) {
+    return new THREE.CylinderGeometry(1/12 * scale, 1/12 * scale, height * scale);
 }
 
-function addCube(obj, x, y, z, a, diagonal) {
+function mobile(x, y, z) {
     'use strict';
-    geometry = new THREE.BoxGeometry(a * scale, a * scale, a * scale);
-    mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(scale * x, scale * y, scale * z);
-    if (diagonal)
-        mesh.rotateZ(Math.PI/4);
-    obj.add(mesh);
-}
 
-function addPlanet(obj, x, y, z, a) {
-    'use strict';
-    geometry = new THREE.SphereGeometry(a * scale, a * scale, a * scale);
-    mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(scale * x, scale * y, scale * z);
-    obj.add(mesh);
-}
+    cu4 = new THREE.Mesh(new THREE.BoxGeometry(4 * scale, 4 * scale, 4 * scale), material);
+    t0 = new THREE.Mesh(tetraedro, material);
+    g42 = new THREE.Object3D();
+    g42.add(t0);
+    g42.add(cu4);
+    g42.position.set(0 * scale, -5 * scale, 0 * scale);
 
-function createLowerMobile(x, y, z) {
-    'use strict';
-    lowerMobile = new THREE.Object3D();
-    //3a 3b 3c 3d 7 3e 3f 3g 3h 3i 3j 3k 3l 3m 9 8 10 11
-    xs_l = [0, -3, 2, -8, -8, 6, -2, 14, 19, 10, 28, 9, 4, 14, 4, -2, 28, 14];
-    ys_l = [-2, -4, -8, -6, -10, -12, -14, -14, -16, -18, -18, -20, -23, -22, -28, -17, -21, -25];
-    radius_l = [stdRadius, stdRadius, stdRadius, stdRadius, cylinderRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius, cylinderRadius];
-    heights_l = [4, 10, 8, 4, cylinderHeight, 16, 4, 4, 18, 4, 4, 10, 6, 4, cylinderHeight];
-    orientations_l = [vertical, horizontal, vertical, vertical, vertical, horizontal, vertical, vertical, horizontal, vertical, vertical, horizontal, vertical, vertical, vertical];
+    h39 = new THREE.Mesh(haste(6), material);
+    g40 = new THREE.Object3D();
+    g40.add(h39);
+    g40.add(g42);
+    g40.rotateZ(-Math.PI/2);
+    g40.position.set(3 * scale, -3 * scale, 0 * scale);
+
+    cy5 = new THREE.Mesh(cilindro, material);
+    e1 = new THREE.Mesh(esfera, material);
+    g41 = new THREE.Object3D();
+    g41.add(cy5);
+    g41.add(e1);
+    g41.position.set(0 * scale, -15 * scale, 0 * scale)
     
-    for (i = 0; i < 15; i++) {
-        addCylinder(lowerMobile, xs_l[i], ys_l[i], 0, radius_l[i], radius_l[i], heights_l[i], orientations_l[i]);
-    }
-    for (; i < 18; i++) {
-        addCube(lowerMobile, xs_l[i], ys_l[i], 0, 2, false);
-    }
+    h38 = new THREE.Mesh(haste(26), material);
+    g39 = new THREE.Object3D();
+    g39.add(h38);
+    g39.add(g41);
+    g39.rotateZ(-Math.PI/2);
+    g39.position.set(-3 * scale, -13 * scale, 0 * scale);
 
-    lowerMobile.position.x = x;
-    lowerMobile.position.y = y;
-    lowerMobile.position.z = z;
-
-    return lowerMobile;
-}
-
-function createMiddleMobile(x, y, z) {
-    'use strict';
-    middleMobile = new THREE.Object3D();
-    createLowerMobile(scale * (-6), scale * (-40), scale * 0);
-    middleMobile.add(lowerMobile);
+    h37 = new THREE.Mesh(haste(6), material);
+    g37 = new THREE.Object3D();
+    g37.add(h37);
+    g37.add(g40);
+    g37.add(g39);
+    g37.rotateZ(Math.PI/2);
+    g37.position.set(1 * scale, -2 * scale, 0 * scale);
     
-    xs_m = [0, -3, 4, -10, -10, 2, -4, 8, 10, 4, 16, 11, 4, 18, 18, 6, 0, 12, 5, 16, -4, 4, 16, 0];
-    ys_m = [-3, -6, -7, -10, -12, -8, -9, -14, -20, -21, -23, -26, -27, -28, -32, -28, -29, -34, -40, -41, -11, -23, -43, -31];
-    radius_m = [stdRadius, stdRadius, stdRadius, stdRadius, cylinderRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius, cylinderRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius];
-    heights_m = [6, 14, 2, 8, 4, 12, 2, 12, 12, 2, 6, 14, 2, 4, 4, 12, 2, 12, 22, 2];
-    orientations_m = [vertical, horizontal, vertical, vertical, vertical, horizontal, vertical, vertical, horizontal, vertical, vertical, horizontal, vertical, vertical, vertical, horizontal, vertical, vertical, horizontal, vertical];
-
-    for (i = 0; i < 20; i++) {
-        addCylinder(middleMobile, xs_m[i], ys_m[i], 0, radius_m[i], radius_m[i], heights_m[i], orientations_m[i]);
-    }
-    for (; i < 24; i++) {
-        addCube(middleMobile, xs_m[i], ys_m[i], 0, 2, false);
-    }
-
-    middleMobile.position.x = x;
-    middleMobile.position.y = y;
-    middleMobile.position.z = z;
-
-    return middleMobile;
-}
-
-function createUpperMobile(x, y, z) {
-    'use strict';
-    upperMobile = new THREE.Object3D();
-    createMiddleMobile(scale * (-24), scale * (-4), scale * 0);
-    upperMobile.add(middleMobile);
+    h35 = new THREE.Mesh(haste(4), material);
+    g35 = new THREE.Object3D();
+    g35.add(h35);
+    g35.add(g37);
+    g35.rotateZ(-Math.PI/2);
+    g35.position.set(-4 * scale, -2 * scale, 0 * scale);
     
-    xs_u = [0, -7, 10, 8, 4, 12, 5, 2, 8];
-    ys_u = [-2, -4, -6, -8, -10, -18, -12, -25, -15];
-    radius_u = [stdRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius, stdRadius];
-    heights_u = [4, 34, 4, 8, 4, 20, 6, 26, 6];
-    orientations_u = [vertical, horizontal, vertical, horizontal, vertical, vertical, horizontal, vertical, vertical];
+    e0 = new THREE.Mesh(esfera, material);
+    cy4 = new THREE.Mesh(new THREE.CylinderGeometry(3 * scale, 3 * scale, 1/12 * scale), material);
+    g38 = new THREE.Object3D();
+    g38.add(e0);
+    g38.add(cy4);
+    g38.position.set(0 * scale, -12 * scale, 0 * scale);
 
-    for (i = 0; i < 9; i++) {
-        addCylinder(upperMobile, xs_u[i], ys_u[i], 0, radius_u[i], radius_u[i], heights_u[i], orientations_u[i]);
-    }
+    h36 = new THREE.Mesh(haste(20), material);
+    g36 = new THREE.Object3D();
+    g36.add(h36);
+    g36.add(g38);
+    g36.rotateZ(-Math.PI/2);
+    g36.position.set(4 * scale, -10 * scale, 0 * scale);
 
-    //estrela
-    addCube(upperMobile, 8, -19, 0, 2, false);
-    addCube(upperMobile, 8, -19, 0, 2, true);
-
-    //planeta
-    addPlanet(upperMobile, 12, -30, 0, 3);
-
-    upperMobile.position.x = x;
-    upperMobile.position.y = y;
-    upperMobile.position.z = z;
+    h34 = new THREE.Mesh(haste(8), material);
+    g34 = new THREE.Object3D();
+    g34.add(h34);
+    g34.add(g35);
+    g34.add(g36);
+    g34.rotateZ(Math.PI/2);
+    g34.position.set(-2 * scale, -2 * scale, 0 * scale);
     
-    scene.add(upperMobile);
+    p2 = new THREE.Mesh(paralelipipedo, material);
+    p2.position.set(0, -4, 0);
+    h32 = new THREE.Mesh(haste(6), material);
+    g33 = new THREE.Object3D();
+    g33.add(p2);
+    g33.add(h32);
+    g33.rotateZ(-Math.PI/2);
+    g33.position.set(-2 * scale, -5 * scale, 0 * scale);
+    
+    cy3 = new THREE.Mesh(cilindro, material);
+    cy3.position.set(0 * scale, -5 * scale, 0 * scale);
+    h31 = new THREE.Mesh(haste(6), material);
+    g32 = new THREE.Object3D();
+    g32.add(h31);
+    g32.add(cy3);
+    g32.position.set(2 * scale, 5 * scale, 0 * scale);
+    g32.rotateZ(-Math.PI/2);
+    
+    h30 = new THREE.Mesh(haste(10), material);
+    g31 = new THREE.Object3D();
+    g31.add(g33);
+    g31.add(h30);
+    g31.add(g32);
+    g31.rotateZ(Math.PI/2);
+    g31.position.set(3 * scale, -5 * scale, 0 * scale);
+    
+    h28 = new THREE.Mesh(haste(4), material);
+    g30 = new THREE.Object3D();
+    g30.add(h28);
+    g30.add(g31);
+    g30.rotateZ(-Math.PI/2);
+    g30.position.set(-9 * scale, -2 * scale, 0 * scale);
+
+    cu3 = new THREE.Mesh(cubo, material);
+    cu3.position.set(0 * scale, -3 * scale, 0 * scale);
+    h29 = new THREE.Mesh(haste(4), material);
+    g29 = new THREE.Object3D();
+    g29.add(h29);
+    g29.add(cu3);
+    g29.rotateZ(-Math.PI/2);
+    g29.position.set(9 * scale, -2 * scale, 0 * scale);
+    
+    h27 = new THREE.Mesh(haste(18), material);
+    g28 = new THREE.Object3D();
+    g28.add(h27);
+    g28.add(g29);
+    g28.add(g30);
+    g28.rotateZ(Math.PI/2);
+    g28.position.set(5 * scale, -2 * scale, 0 * scale);
+    
+    h26 = new THREE.Mesh(haste(4), material);
+    g27 = new THREE.Object3D();
+    g27.add(g28);
+    g27.add(h26);
+    g27.rotateZ(-Math.PI/2);
+    g27.position.set(8 * scale, -2 * scale, 0 * scale);
+
+    p1 = new THREE.Mesh(paralelipipedo, material);
+    p1.position.set(0 * scale, -4 * scale, 0 * scale);
+    h25 = new THREE.Mesh(haste(4), material);
+    g26 = new THREE.Object3D();
+    g26.add(p1);
+    g26.add(h25);
+    g26.rotateZ(-Math.PI/2);
+    g26.position.set(-8 * scale, -2 * scale, 0 * scale);
+    
+    h24 = new THREE.Mesh(haste(16), material);
+    g25 = new THREE.Object3D();
+    g25.add(h24);
+    g25.add(g26);
+    g25.add(g27);
+
+    cy2 = new THREE.Mesh(cilindro, material);
+    cy2.position.set(0 * scale, -5 * scale, 0 * scale);
+    h22 = new THREE.Mesh(haste(6), material);
+    g23 = new THREE.Object3D();
+    g23.rotateZ(-Math.PI/2);
+    g23.position.set(-5 * scale, -3 * scale, 0 * scale);
+    
+    h23 = new THREE.Mesh(haste(8), material);
+    g24 = new THREE.Object3D();
+    g24.add(h23);
+    g24.add(g25);
+    g24.rotateZ(-Math.PI/2);
+    g24.position.set(5 * scale, -4 * scale, 0 * scale);
+
+    h21 = new THREE.Mesh(haste(10), material);
+    g22 = new THREE.Object3D();
+    g22.add(h21);
+    g22.add(g23);
+    g22.add(g24);
+    g22.rotateZ(Math.PI/2);
+    g22.position.set(-3 * scale, -2 * scale, 0 * scale);
+    
+    cu2 = new THREE.Mesh(cubo, material);
+    cu2.position.set(0 * scale, -2 * scale, 0 * scale);
+    h19 = new THREE.Mesh(haste(2), material);
+    g21 = new THREE.Object3D();
+    g21.add(h19);
+    g21.add(cu2);
+    g21.rotateZ(-Math.PI/2);
+    g21.position.set(11 * scale, -1 * scale, 0 * scale);
+
+    h20 = new THREE.Mesh(haste(4), material);
+    g20 = new THREE.Object3D();
+    g20.add(h20);
+    g20.add(g22);
+    // g20.rotateY(v3);
+    g20.rotateZ(-Math.PI/2);
+    g20.position.set(-11 * scale, -2 * scale, 0 * scale);
+
+    // ------------------------------
+    // edge of lower mobile
+    // ------------------------------
+
+    h18 = new THREE.Mesh(haste(22), material);
+    g19 = new THREE.Object3D();
+    g19.add(h18);
+    g19.add(g21);
+    g19.add(g20);
+    g19.rotateZ(Math.PI/2);
+    g19.position.set(-7 * scale, -6 * scale, 0 * scale);    
+
+    h17 = new THREE.Mesh(haste(12), material);
+    g18 = new THREE.Object3D();
+    g18.add(h17);
+    g18.add(g19);
+    g18.rotateZ(-Math.PI/2);
+    g18.position.set(6 * scale, -6 * scale, 0 * scale);
+
+    h16 = new THREE.Mesh(haste(2), material);
+    g17 = new THREE.Object3D();
+    cu1 = new THREE.Mesh(cubo, material);
+    g17.add(h16);
+    g17.add(cu1);
+    g17.rotateZ(-Math.PI/2);
+    g17.position.set(-6 * scale, -1 * scale, 0 * scale);
+    
+    h15 = new THREE.Mesh(haste(12), material);
+    g16 = new THREE.Object3D();
+    g16.add(g17);
+    g16.add(g18);
+    g16.rotateZ(Math.PI/2);
+    g16.position.set(2 * scale, -1 * scale, 0 * scale);
+
+    h13 = new THREE.Mesh(haste(2), material);
+    g14 = new THREE.Object3D();
+    g14.add(g16);
+    g14.add(h13);
+    g14.rotateZ(-Math.PI/2);
+    g14.position.set(-7 * scale, -1 * scale, 0 * scale);
+    
+    cy1 = new THREE.Mesh(cilindro, material);
+    cy1.position.set(0 * scale, -4 * scale, 0 * scale);
+    h14 = new THREE.Mesh(haste(4), material);
+    g15 = new THREE.Object3D();
+    g15.add(h14);
+    g15.add(cy1);
+
+    h12 = new THREE.Mesh(haste(14), material);
+    g13 = new THREE.Object3D();
+    g13.add(h12);
+    g13.add(g15);
+    g13.add(g14);
+    g13.rotateZ(Math.PI/2);
+    g13.position.set(-5 * scale, -3 * scale, 0 * scale);
+    
+    h11 = new THREE.Mesh(haste(6), material);
+    g12 = new THREE.Object3D();
+    g12.add(h11);
+    g12.add(g13);
+    g12.rotateZ(-Math.PI/2);
+    g12.position.set(6 * scale, -3 * scale, 0 * scale);
+
+    cu0 = new THREE.Mesh(cubo, material);
+    cu0.position.set(0 * scale, -2 * scale, 0 * scale);
+    h10 = new THREE.Mesh(haste(2), material);
+    g11 = new THREE.Object3D();
+    g11.add(cu0);
+    g11.add(h10);
+    g11.rotateZ(-Math.PI/2);
+    g11.position.set(-6 * scale, -1 * scale, 0 * scale);
+
+    h9 = new THREE.Mesh(haste(12), material);
+    g10 = new THREE.Object3D();
+    g10.add(g11);
+    g10.add(g12);
+    g10.add(h9);
+    
+    h8 = new THREE.Mesh(haste(12), material);
+    g9 = new THREE.Object3D();
+    g9.add(h8);
+    g9.add(g10);
+    g9.rotateZ(-Math.PI/2);
+    g9.position.set(6 * scale, -6 * scale, 0 * scale);
+        
+    p0 = new THREE.Mesh(paralelipipedo, material);
+    p0.position.set(0 * scale, -3 * scale, 0 * scale);
+    h7 = new THREE.Mesh(haste(2), material); 
+    g8 = new THREE.Object3D();
+    g8.add(p0);
+    g8.add(h7);
+    g8.rotateZ(-Math.PI/2);
+    g8.position.set(-6 * scale, -1 * scale, 0 * scale);
+    
+    h6 = new THREE.Mesh(haste(12), material);
+    g7 = new THREE.Object3D();
+    g7.add(h6);
+    g7.add(g9);
+    g7.add(g8);
+    g7.rotateZ(Math.PI/2);
+    g7.position.set(-2 * scale, -1 * scale, 0 * scale);
+    
+    h5 = new THREE.Mesh(haste(2), material);
+    g6 = new THREE.Object3D();
+    g6.add(h5);
+    g6.add(g7);
+    g6.rotateZ(-Math.PI/2);
+    g6.position.set(7 * scale, -1 * scale, 0 * scale);
+
+    cy0 = new THREE.Mesh(cilindro, material);
+    cy0.position.set(0 * scale, -7 * scale, 0 * scale);
+    h4 = new THREE.Mesh(haste(10), material);
+    g5 = new THREE.Object3D();
+    g5.add(cy0);
+    g5.add(h4);
+    g5.rotateZ(-Math.PI/2);
+    g5.position.set(-7 * scale, -5 * scale, 0 * scale);
+    
+    h3 = new THREE.Mesh(haste(14), material);
+    g4 = new THREE.Object3D();
+    g4.add(h3);
+    g4.add(g5);
+    g4.add(g6);
+    g4.rotateZ(Math.PI/2);
+    g4.position.set(-3 * scale, -3 * scale, 0 * scale);
+    
+    h33 = new THREE.Mesh(haste(4), material);
+    g3 = new THREE.Object3D();
+    g3.add(h33);
+    g3.add(g34);
+    g3.rotateZ(-Math.PI/2);
+    g3.position.set(17 * scale, -2 * scale, 0 * scale);
+
+    h2 = new THREE.Mesh(haste(6), material);
+    g2 = new THREE.Object3D();
+    g2.add(h2);
+    g2.add(g3);
+    g2.add(g4);
+    g2.rotateZ(-Math.PI/2);
+    g2.position.set(-17 * scale, -3 * scale, 0 * scale);
+    
+    h1 = new THREE.Mesh(haste(34), material);
+    g1 = new THREE.Object3D();
+    g1.add(h1);
+    g1.add(g2);
+    g1.add(g3);
+    g1.rotateZ(Math.PI/2);
+    g1.position.set(-7 * scale, -2 * scale, 0 * scale);
+
+    h0 = new THREE.Mesh(haste(4), material);
+    g0 = new THREE.Object3D();
+    g0.add(h0);
+    g0.add(g1);
+    g0.position.set(0 * scale, 35 * scale, 0 * scale);
+
+    // ------------------------------
+    // edge of upper mobile
+    // ------------------------------
+
+    scene.add(g31);
 }
 
 function createScene() {
     'use strict';
     scene = new THREE.Scene();
     scene.add(new THREE.AxisHelper(10));
-    createUpperMobile(0, 100, 0);
+    mobile(0, 0, 0);
 }
 
 function createCamera() {
@@ -317,21 +575,21 @@ function animate() {
     camera.lookAt(scene.position);
 
     if (rotate_v1_r) {
-        upperMobile.rotation.y -= .03;
+        g0.rotation.y -= .03;
     }
     else if (rotate_v1_l) {
-        upperMobile.rotation.y += .03;
+        g0.rotation.y += .03;
     }
     else if (rotate_v2_r) {
-        middleMobile.rotation.y -= .03;
+        g8.rotation.y -= .03;
     }
     else if (rotate_v2_l) {
-        middleMobile.rotation.y += .03;
+        g8.rotation.y += .03;
     }
     else if (rotate_v3_r)
-        lowerMobile.rotation.y -= .03;
+        g20.rotation.y -= .03;
     else if (rotate_v3_l)
-        lowerMobile.rotation.y += .03;
+        g20.rotation.y += .03;
     
     render();
     requestAnimationFrame(animate);
