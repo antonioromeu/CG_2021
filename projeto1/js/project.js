@@ -1,11 +1,21 @@
 var camera, scene, renderer;
-var geometry, mesh, cube;
-var scale = 5;
+var scale = 4;
 var rotate_v1_r, rotate_v1_l, rotate_v2_r, rotate_v2_l, rotate_v3_r, rotate_v3_l;
 var leftArrow, topArrow, rightArrow, downArrow;
 var camera1, camera2, camera3;
-var near = 1, far = 1500;
-var material = new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true });
+var near = 1, far = 1500 * scale;
+var grey = new THREE.Color("rgb(150, 150, 150)");
+var yellow = new THREE.Color("rgb(255, 200, 0)");
+var orange = new THREE.Color("rgb(250, 150, 0)");
+var green = new THREE.Color("rgb(0, 200, 150)");
+var pink = new THREE.Color("rgb(170, 0, 100)");
+var blue = new THREE.Color("rgb(0, 150, 200)");
+var material = new THREE.MeshBasicMaterial({ color: grey, wireframe: true });
+var yellowMaterial = new THREE.MeshBasicMaterial({ color: yellow, wireframe: true });
+var orangeMaterial = new THREE.MeshBasicMaterial({ color: orange, wireframe: true });
+var greenMaterial = new THREE.MeshBasicMaterial({ color: green, wireframe: true });
+var pinkMaterial = new THREE.MeshBasicMaterial({ color: pink, wireframe: true });
+var blueMaterial = new THREE.MeshBasicMaterial({ color: blue, wireframe: true });
 var h0, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10;
 var h11, h12, h13, h14, h15, h16, h17, h18, h19, h20;
 var h21, h22, h23, h24, h25, h26, h27, h28, h29, h30;
@@ -34,8 +44,8 @@ function haste(height) {
 function mobile() {
     'use strict';
 
-    cu4 = new THREE.Mesh(new THREE.BoxGeometry(4 * scale, 4 * scale, 4 * scale), material);
-    t0 = new THREE.Mesh(tetraedro, material);
+    cu4 = new THREE.Mesh(new THREE.BoxGeometry(4 * scale, 4 * scale, 4 * scale), yellowMaterial);
+    t0 = new THREE.Mesh(tetraedro, yellowMaterial);
     g42 = new THREE.Object3D();
     g42.add(t0);
     g42.add(cu4);
@@ -49,7 +59,7 @@ function mobile() {
     g40.position.set(-3 * scale, -3 * scale, 0 * scale);
 
     cy5 = new THREE.Mesh(new THREE.CylinderGeometry(3 * scale, 3 * scale, 1/12 * scale), material);
-    e1 = new THREE.Mesh(esfera, material);
+    e1 = new THREE.Mesh(esfera, orangeMaterial);
     g41 = new THREE.Object3D();
     g41.add(cy5);
     g41.add(e1);
@@ -77,7 +87,7 @@ function mobile() {
     g35.rotateZ(-Math.PI/2);
     g35.position.set(-2 * scale, 4 * scale, 0 * scale);
     
-    e0 = new THREE.Mesh(esfera, material);
+    e0 = new THREE.Mesh(esfera, orangeMaterial);
     cy4 = new THREE.Mesh(new THREE.CylinderGeometry(3 * scale, 3 * scale, 1/12 * scale), material);
     g38 = new THREE.Object3D();
     g38.add(e0);
@@ -99,7 +109,7 @@ function mobile() {
     g34.rotateZ(Math.PI/2);
     g34.position.set(-2 * scale, -2 * scale, 0 * scale);
     
-    p2 = new THREE.Mesh(paralelipipedo, material);
+    p2 = new THREE.Mesh(paralelipipedo, blueMaterial);
     p2.position.set(0 * scale, -4 * scale, 0 * scale);
     h32 = new THREE.Mesh(haste(4), material);
     g33 = new THREE.Object3D();
@@ -108,7 +118,7 @@ function mobile() {
     g33.rotateZ(-Math.PI/2);
     g33.position.set(-2 * scale, -5 * scale, 0 * scale);
     
-    cy3 = new THREE.Mesh(cilindro, material);
+    cy3 = new THREE.Mesh(cilindro, greenMaterial);
     cy3.position.set(0 * scale, -5 * scale, 0 * scale);
     h31 = new THREE.Mesh(haste(6), material);
     g32 = new THREE.Object3D();
@@ -132,7 +142,7 @@ function mobile() {
     g30.rotateZ(-Math.PI/2);
     g30.position.set(-2 * scale, 9 * scale, 0 * scale);
 
-    cu3 = new THREE.Mesh(cubo, material);
+    cu3 = new THREE.Mesh(cubo, pinkMaterial);
     cu3.position.set(0 * scale, -3 * scale, 0 * scale);
     h29 = new THREE.Mesh(haste(4), material);
     g29 = new THREE.Object3D(); 
@@ -156,7 +166,7 @@ function mobile() {
     g27.rotateZ(-Math.PI/2);
     g27.position.set(-2 * scale, -8 * scale, 0 * scale);
 
-    p1 = new THREE.Mesh(paralelipipedo, material);
+    p1 = new THREE.Mesh(paralelipipedo, blueMaterial);
     p1.position.set(0 * scale, -4 * scale, 0 * scale);
     h25 = new THREE.Mesh(haste(4), material);
     g26 = new THREE.Object3D();
@@ -173,7 +183,7 @@ function mobile() {
     g25.rotateZ(Math.PI/2);
     g25.position.set(4 * scale, -4 * scale, 0 * scale);
 
-    cy2 = new THREE.Mesh(cilindro, material);
+    cy2 = new THREE.Mesh(cilindro, greenMaterial);
     cy2.position.set(0 * scale, -5 * scale, 0 * scale);
     h22 = new THREE.Mesh(haste(6), material);
     g23 = new THREE.Object3D();
@@ -197,7 +207,7 @@ function mobile() {
     g22.rotateZ(Math.PI/2);
     g22.position.set(-3 * scale, -2 * scale, 0 * scale);
     
-    cu2 = new THREE.Mesh(cubo, material);
+    cu2 = new THREE.Mesh(cubo, pinkMaterial);
     cu2.position.set(0 * scale, -2 * scale, 0 * scale);
     h19 = new THREE.Mesh(haste(2), material);
     g21 = new THREE.Object3D();
@@ -230,7 +240,7 @@ function mobile() {
 
     h16 = new THREE.Mesh(haste(2), material);
     g17 = new THREE.Object3D();
-    cu1 = new THREE.Mesh(cubo, material);
+    cu1 = new THREE.Mesh(cubo, pinkMaterial);
     cu1.position.set(0 * scale, -2 * scale, 0 * scale);
     g17.add(h16);
     g17.add(cu1);
@@ -252,7 +262,7 @@ function mobile() {
     g14.rotateZ(-Math.PI/2);
     g14.position.set(-1 * scale, 7 * scale, 0 * scale);
     
-    cy1 = new THREE.Mesh(cilindro, material);
+    cy1 = new THREE.Mesh(cilindro, greenMaterial);
     cy1.position.set(0 * scale, -4 * scale, 0 * scale);
     h14 = new THREE.Mesh(haste(4), material);
     g15 = new THREE.Object3D();
@@ -276,7 +286,7 @@ function mobile() {
     g12.rotateZ(-Math.PI/2);
     g12.position.set(-3 * scale, -6 * scale, 0 * scale);
 
-    cu0 = new THREE.Mesh(cubo, material);
+    cu0 = new THREE.Mesh(cubo, pinkMaterial);
     cu0.position.set(0 * scale, -2 * scale, 0 * scale);
     h10 = new THREE.Mesh(haste(2), material);
     g11 = new THREE.Object3D();
@@ -300,7 +310,7 @@ function mobile() {
     g9.rotateZ(-Math.PI/2);
     g9.position.set(-6 * scale, -6 * scale, 0 * scale);
         
-    p0 = new THREE.Mesh(paralelipipedo, material);
+    p0 = new THREE.Mesh(paralelipipedo, blueMaterial);
     p0.position.set(0 * scale, -3 * scale, 0 * scale);
     h7 = new THREE.Mesh(haste(2), material); 
     g8 = new THREE.Object3D();
@@ -324,7 +334,7 @@ function mobile() {
     g6.rotateZ(-Math.PI/2);
     g6.position.set(-1 * scale, -7 * scale, 0 * scale);
 
-    cy0 = new THREE.Mesh(cilindro, material);
+    cy0 = new THREE.Mesh(cilindro, greenMaterial);
     cy0.position.set(0 * scale, -7 * scale, 0 * scale);
     h4 = new THREE.Mesh(haste(10), material);
     g5 = new THREE.Object3D();
@@ -387,7 +397,7 @@ function createCamera() {
     camera = new THREE.OrthographicCamera(width / - 2, width / 2, height / 2, height / - 2, near, far);
     camera.position.x = 0;
     camera.position.y = 0;
-    camera.position.z = 200;
+    camera.position.z = 200 * scale;
     camera.lookAt(scene.position);
 }
 
@@ -430,6 +440,11 @@ function onKeyDown(e) {
         case 52: // 4 alternate mesh
         case 100: // 4 alternate mesh
             material.wireframe = !material.wireframe;
+            yellowMaterial.wireframe = !yellowMaterial.wireframe;
+            orangeMaterial.wireframe = !orangeMaterial.wireframe;
+            greenMaterial.wireframe = !greenMaterial.wireframe;
+            pinkMaterial.wireframe = !pinkMaterial.wireframe;
+            blueMaterial.wireframe = !blueMaterial.wireframe;
             break;
         case 81: // Q/q --- rodar para a esquerda angulo v1
             rotate_v1_l = true;
@@ -448,14 +463,6 @@ function onKeyDown(e) {
             break;
         case 90: // Z/z --- rodar para a direita angulo v3
             rotate_v3_r = true;
-            break;
-        case 69:  // E
-        case 101: // e
-            scene.traverse(function (node) {
-                if (node instanceof THREE.AxisHelper) {
-                    node.visible = !node.visible;
-                }
-            });
             break;
     }
 }
@@ -547,17 +554,17 @@ function animate() {
     if (camera1) {
         camera.position.x = 0;
         camera.position.y = 0;
-        camera.position.z = 200;
+        camera.position.z = 200 * scale;
     }
 
     else if (camera2) {
         camera.position.x = 0;
-        camera.position.y = 200;
+        camera.position.y = 200 * scale;
         camera.position.z = 0;
     }
 
     else if (camera3) {
-        camera.position.x = 200;
+        camera.position.x = 200 * scale;
         camera.position.y = 0;
         camera.position.z = 0;
     }
