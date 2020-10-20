@@ -11,13 +11,10 @@ var yellow = new THREE.Color("rgb(255, 200, 0)");
 var grey = new THREE.Color("rgb(150, 150, 150)");
 var ballMaterial = new THREE.MeshBasicMaterial({ color: pink, wireframe: true });
 var stickMaterial = new THREE.MeshBasicMaterial({ color: yellow, wireframe: true });
-var tableMaterial = new THREE.MeshBasicMaterial({ color: grey, wireframe: true});
 var planeMaterial = new THREE.MeshBasicMaterial( {color: grey, side: THREE.DoubleSide, wireframe: true} );
 var basePlane = new THREE.PlaneGeometry(tableWidth, tableDepth, 10);
 var longWallPlane = new THREE.PlaneGeometry(tableDepth, ballRadius * 2, 10, 10);
-var smallWallPlan = new THREE.PlaneGeometry(ballRadius * 2, tableWidth, 10, 10);
-var planeWidth = new THREE.PlaneGeometry(20 * scale, 5 * scale, 10);
-var cube = new THREE.BoxGeometry(tableWidth, ballRadius, tableDepth);
+var smallWallPlan = new THREE.PlaneGeometry(tableWidth, ballRadius * 2, 10, 10);
 
 class Ball {
     constructor() {
@@ -75,16 +72,14 @@ function createMesa() {
     var topWall = new THREE.Mesh(smallWallPlan, planeMaterial);
     var bottomWall = new THREE.Mesh(smallWallPlan, planeMaterial);
     var table = new THREE.Object3D();
-    base.rotateX(Math.PI/2);
     base.rotateZ(Math.PI/2);
+    base.rotateY(Math.PI/2);
     table.add(base);
     leftWall.position.set(0, ballRadius, tableWidth/2);
     rightWall.position.set(0, ballRadius, -tableWidth/2);
     topWall.position.set(-tableDepth/2, ballRadius, 0);
     bottomWall.position.set(tableDepth/2, ballRadius, 0);
-    topWall.rotateX(Math.PI/2);
     topWall.rotateY(Math.PI/2);
-    bottomWall.rotateX(Math.PI/2);
     bottomWall.rotateY(Math.PI/2);
     table.add(leftWall);
     table.add(rightWall);
@@ -105,8 +100,8 @@ function createCamera() {
     var width = window.innerWidth;
     var height = window.innerHeight;
     camera = new THREE.OrthographicCamera(width / - 2, width / 2, height / 2, height / - 2, near, far);
-    camera.position.x = 0;
-    camera.position.y = 0 * scale;
+    camera.position.x = 200;
+    camera.position.y = 200;
     camera.position.z = 200;
     camera.lookAt(scene.position);
 }
@@ -260,19 +255,19 @@ function animate() {
         g0.position.z--;
     */
     if (camera1) {
-        camera.position.x = 200 * scale;
-        camera.position.y = 200 * scale;
-        camera.position.z = 200 * scale;
+        camera.position.x = 0;
+        camera.position.y = 0;
+        camera.position.z = 200;
     }
 
     else if (camera2) {
         camera.position.x = 0;
-        camera.position.y = 200 * scale;
+        camera.position.y = 200;
         camera.position.z = 0;
     }
 
     else if (camera3) {
-        camera.position.x = 200 * scale;
+        camera.position.x = 200;
         camera.position.y = 0;
         camera.position.z = 0;
     }
