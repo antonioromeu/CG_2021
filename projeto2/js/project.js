@@ -1,29 +1,49 @@
 var camera, scene, renderer;
-var scale = 2.5;
+var scale = 2;
+var clock;
 var near = 1, far = 1500 * scale;
 var camera1, camera2, camera3;
 var ballRadius = 5 * scale;
 var stickLength = 80 * scale;
+var stickSmallRadius = 0.9 * scale, stickBigRadius = 3 * scale;
 var tableHoleRadius = 5 * scale;
 var tableWidth = 100 * scale, tableDepth = 200 * scale;
+var minSpeed = -2, maxSpeed = 2;
+var ball1;
 var pink = new THREE.Color("rgb(170, 0, 100)");
 var yellow = new THREE.Color("rgb(255, 200, 0)");
 var grey = new THREE.Color("rgb(150, 150, 150)");
 var ballMaterial = new THREE.MeshBasicMaterial({ color: pink, wireframe: true });
 var stickMaterial = new THREE.MeshBasicMaterial({ color: yellow, wireframe: true });
 var planeMaterial = new THREE.MeshBasicMaterial( {color: grey, side: THREE.DoubleSide, wireframe: true} );
-var basePlane = new THREE.PlaneGeometry(tableWidth, tableDepth, 10);
-var longWallPlane = new THREE.PlaneGeometry(tableDepth, ballRadius * 2, 10, 10);
-var smallWallPlan = new THREE.PlaneGeometry(tableWidth, ballRadius * 2, 10, 10);
+
+function getRandomArbitrary(min, max) {
+    return Math.random() * (max - min) + min;
+}
 
 class Ball {
     constructor() {
-        this.xPos = Math.randFloat(0, high);
-        this.zPos = Math.randFloat(low, high);
-        
+        this.zPos = getRandomArbitrary(-tableWidth/2 + ballRadius, tableWidth/2 - ballRadius);
+        this.xPos = getRandomArbitrary(-tableDepth/2 + ballRadius, tableDepth/2 - ballRadius);
+        this.yPos = ballRadius;
+        this.speedVector = new THREE.Vector3(getRandomArbitrary(minSpeed, maxSpeed), 0, getRandomArbitrary(minSpeed, maxSpeed));
         var sphere = new THREE.SphereGeometry(ballRadius, 32, 32);
         var mesh = new THREE.Mesh(sphere, ballMaterial);
-        this.obj = new THREE.Object3D().add(mesh);
+        var ball = new THREE.Object3D().add(mesh);
+        mesh.geometry.computeBoundingBox();
+        this.bbmin = mesh.geometry.boundingBox.min;
+        this.bbmax = mesh.geometry.boundingBox.max;
+        ball.position.set(this.xPos, this.yPos, this.zPos);
+        this.obj = ball;
+    }
+
+
+    update(time) {
+        let pos = this.obj.position;
+        var speed = new THREE.Vector3();
+        speed.copy(this.speedVector);
+        pos.add(speed.multiplyScalar(1/Math.exp(time)));
+        this.obj.position.set(pos.x, pos.y, pos.z);
     }
 }
 
@@ -31,10 +51,38 @@ class WhiteBall extends Ball {
     constructor(xPos, zPos) {
         this.xPos = xPos;
         this.zPos = zPos;
-        
         var sphere = new THREE.SphereGeometry(ballRadius, 32, 32);
         var mesh = new THREE.Mesh(sphere, pinkMaterial);
         this.obj = new THREE.Object3D().add(mesh);
+    }
+}
+
+class Table {
+    constructor() {
+        var tableHeight = ballRadius * 3;
+        var basePlane = new THREE.PlaneGeometry(tableWidth, tableDepth, 10);
+        var longWallPlane = new THREE.PlaneGeometry(tableDepth, tableHeight, 10, 10);
+        var smallWallPlan = new THREE.PlaneGeometry(tableWidth, tableHeight, 10, 10);
+        var base = new THREE.Mesh(basePlane, planeMaterial);
+        var leftWall = new THREE.Mesh(longWallPlane, planeMaterial);
+        var rightWall = new THREE.Mesh(longWallPlane, planeMaterial);
+        var topWall = new THREE.Mesh(smallWallPlan, planeMaterial);
+        var bottomWall = new THREE.Mesh(smallWallPlan, planeMaterial);
+        var table = new THREE.Object3D();
+        base.rotateZ(Math.PI/2);
+        base.rotateY(Math.PI/2);
+        table.add(base);
+        leftWall.position.set(0, tableHeight/2, tableWidth/2);
+        rightWall.position.set(0, tableHeight/2, -tableWidth/2);
+        topWall.position.set(-tableDepth/2, tableHeight/2, 0);
+        bottomWall.position.set(tableDepth/2, tableHeight/2, 0);
+        topWall.rotateY(Math.PI/2);
+        bottomWall.rotateY(Math.PI/2);
+        table.add(leftWall);
+        table.add(rightWall);
+        table.add(topWall);
+        table.add(bottomWall);
+        this.obj = table;
     }
 }
 
@@ -42,50 +90,46 @@ class Stick {
     constructor(xPos, zPos, direction) {
         this.xPos = xPos;
         this.zPos = zPos;
-
-        var cylinder = new THREE.CylinderGeometry(2 * scale, 4 * scale, stickLength, 16);
-        var mesh = new THREE.Mesh(cylinder, stickMaterial);
-        this.obj = new THREE.Object3D().add(mesh);
-
+        this.yPos = ballRadius;
+        let stick = new THREE.CylinderGeometry(stickSmallRadius, stickBigRadius, stickLength, 6);
+        this.obj = new THREE.Object3D().add(new THREE.Mesh(stick, planeMaterial));
+        this.obj.rotateZ(Math.PI/2);
         switch (direction) {
             case "down":
-                this.angle = 0; 
+                this.angle = -Math.PI/2; 
                 break;
             case "up":
-                this.angle = Math.PI; 
-                break;
-            case "right":
                 this.angle = Math.PI/2;
                 break;
+            case "right":
+                this.angle = 0;
+                break;
             case "left":
-                this.angle = -Math.PI/2;
+                this.angle = Math.PI;
                 break;
         }
-        this.obj.rotazeY(this.angle);
+        this.obj.rotateX(this.angle);
+        this.obj.position.set(this.xPos, this.yPos, this.zPos);
     }
 }
 
 function createMesa() {
-    var base = new THREE.Mesh(basePlane, planeMaterial);
-    var leftWall = new THREE.Mesh(longWallPlane, planeMaterial);
-    var rightWall = new THREE.Mesh(longWallPlane, planeMaterial);
-    var topWall = new THREE.Mesh(smallWallPlan, planeMaterial);
-    var bottomWall = new THREE.Mesh(smallWallPlan, planeMaterial);
-    var table = new THREE.Object3D();
-    base.rotateZ(Math.PI/2);
-    base.rotateY(Math.PI/2);
-    table.add(base);
-    leftWall.position.set(0, ballRadius, tableWidth/2);
-    rightWall.position.set(0, ballRadius, -tableWidth/2);
-    topWall.position.set(-tableDepth/2, ballRadius, 0);
-    bottomWall.position.set(tableDepth/2, ballRadius, 0);
-    topWall.rotateY(Math.PI/2);
-    bottomWall.rotateY(Math.PI/2);
-    table.add(leftWall);
-    table.add(rightWall);
-    table.add(topWall);
-    table.add(bottomWall);
-    scene.add(table);
+    var table = new Table();
+    ball1 = new Ball();
+    var leftStick = new Stick(-tableDepth/2 - stickLength/2 - 5 * scale, 0, "left");
+    var rightStick = new Stick(tableDepth/2 + stickLength/2 + 5 * scale, 0, "right");
+    var topLeftStick = new Stick(-tableDepth/4, - tableWidth/2 - stickLength/2 - 5 * scale, "up");
+    var topRightStick = new Stick(tableDepth/4, - tableWidth/2 - stickLength/2 - 5 * scale, "up");
+    var bottomLeftStick = new Stick(-tableDepth/4, tableWidth/2 + stickLength/2 + 5 * scale, "down");
+    var bottomRightStick = new Stick(tableDepth/4, tableWidth/2 + stickLength/2 + 5 * scale, "down");
+    scene.add(ball1.obj);
+    scene.add(table.obj);
+    scene.add(leftStick.obj);
+    scene.add(rightStick.obj);
+    scene.add(topLeftStick.obj);
+    scene.add(topRightStick.obj);
+    scene.add(bottomLeftStick.obj);
+    scene.add(bottomRightStick.obj);
 }
 
 function createScene() {
@@ -118,6 +162,11 @@ function onResize() {
 function render() {
     'use strict';
     renderer.render(scene, camera);
+    var elapsedTime = clock.getElapsedTime();
+    ball1.update(elapsedTime);
+    // console.log(elapsedTime.valueOf());
+    //console.log(ball1.obj.position);
+
 }
 
 function init() {
@@ -125,7 +174,8 @@ function init() {
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
-
+    clock = new THREE.Clock();
+    
     createScene();
     createCamera();
     render();
