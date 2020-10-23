@@ -1,5 +1,5 @@
 var camera, scene, renderer;
-var scale = 2;
+var scale = 4;
 var clock;
 var near = 1, far = 1500 * scale;
 var camera1, camera2, camera3;
@@ -8,14 +8,16 @@ var stickLength = 80 * scale;
 var stickSmallRadius = 0.9 * scale, stickBigRadius = 3 * scale;
 var tableHoleRadius = 5 * scale;
 var tableWidth = 100 * scale, tableDepth = 200 * scale;
-var minSpeed = -2, maxSpeed = 2;
-var ball1;
+var minSpeed = -10, maxSpeed = 10;
+// var minDistance = 1;
+var balls = [];
+var nBalls = 16;
 var pink = new THREE.Color("rgb(170, 0, 100)");
 var yellow = new THREE.Color("rgb(255, 200, 0)");
 var grey = new THREE.Color("rgb(150, 150, 150)");
 var ballMaterial = new THREE.MeshBasicMaterial({ color: pink, wireframe: true });
 var stickMaterial = new THREE.MeshBasicMaterial({ color: yellow, wireframe: true });
-var planeMaterial = new THREE.MeshBasicMaterial( {color: grey, side: THREE.DoubleSide, wireframe: true} );
+var planeMaterial = new THREE.MeshBasicMaterial({ color: grey, side: THREE.DoubleSide, wireframe: true });
 
 function getRandomArbitrary(min, max) {
     return Math.random() * (max - min) + min;
@@ -23,27 +25,93 @@ function getRandomArbitrary(min, max) {
 
 class Ball {
     constructor() {
-        this.zPos = getRandomArbitrary(-tableWidth/2 + ballRadius, tableWidth/2 - ballRadius);
-        this.xPos = getRandomArbitrary(-tableDepth/2 + ballRadius, tableDepth/2 - ballRadius);
-        this.yPos = ballRadius;
-        this.speedVector = new THREE.Vector3(getRandomArbitrary(minSpeed, maxSpeed), 0, getRandomArbitrary(minSpeed, maxSpeed));
+        var z = getRandomArbitrary(-tableWidth/2 + ballRadius, tableWidth/2 - ballRadius);
+        var x = getRandomArbitrary(-tableDepth/2 + ballRadius, tableDepth/2 - ballRadius);
+        var y = ballRadius;
+        this.speed = new THREE.Vector3(getRandomArbitrary(minSpeed, maxSpeed), 0, getRandomArbitrary(minSpeed, maxSpeed));
         var sphere = new THREE.SphereGeometry(ballRadius, 32, 32);
         var mesh = new THREE.Mesh(sphere, ballMaterial);
         var ball = new THREE.Object3D().add(mesh);
-        mesh.geometry.computeBoundingBox();
-        this.bbmin = mesh.geometry.boundingBox.min;
-        this.bbmax = mesh.geometry.boundingBox.max;
-        ball.position.set(this.xPos, this.yPos, this.zPos);
+        ball.position.set(x, y, z);
         this.obj = ball;
+        this.nextPos = new THREE.Vector3(x, y, z);
+        this.nextSpeed = new THREE.Vector3();
+        this.nextSpeed = this.speed;
     }
 
+    computePosition(delta) {
+        this.nextSpeed.multiplyScalar(1 - delta);
+        this.nextPos.add(this.nextSpeed);
+    }
+    
+    intersectsTable() {
+        return !(this.nextPos.getComponent(0) >= (-tableDepth/2 + ballRadius) &&
+                this.nextPos.getComponent(0) <= (tableDepth/2 - ballRadius) &&
+                this.nextPos.getComponent(2) >= (-tableWidth/2 + ballRadius) &&
+                this.nextPos.getComponent(2) <= (tableWidth/2 - ballRadius));
+    }
 
-    update(time) {
-        let pos = this.obj.position;
-        var speed = new THREE.Vector3();
-        speed.copy(this.speedVector);
-        pos.add(speed.multiplyScalar(1/Math.exp(time)));
-        this.obj.position.set(pos.x, pos.y, pos.z);
+    computeTableRicochet() {
+        var x = this.obj.position.getComponent(0);
+        var z = this.obj.position.getComponent(2);
+        if (x == (-tableDepth/2 + ballRadius) || x == (tableDepth/2 - ballRadius))
+            this.nextSpeed.setComponent(0, -this.nextSpeed.getComponent(0));
+        if (z == (-tableWidth/2 + ballRadius) || z == (tableWidth/2 - ballRadius))
+            this.nextSpeed.setComponent(2, -this.nextSpeed.getComponent(2));
+        if (x < (-tableDepth/2 + ballRadius))
+            this.nextPos.setComponent(0, -tableDepth/2 + ballRadius);
+        if (x > (tableDepth/2 - ballRadius))
+            this.nextPos.setComponent(0, tableDepth/2 - ballRadius);
+        if (z < (-tableWidth/2 + ballRadius))
+            this.nextPos.setComponent(2, -tableWidth/2 + ballRadius);
+        if (z > (tableWidth/2 - ballRadius))
+            this.nextPos.setComponent(2, tableWidth/2 - ballRadius);
+    }
+    
+    intersectsBall(ball) {
+        var x = this.nextPos.getComponent(0);
+        var z = this.nextPos.getComponent(2);
+        var distance = Math.sqrt((x - ball.obj.position.getComponent(0)) * (x - ball.obj.position.getComponent(0)) +
+                                 (z - ball.obj.position.getComponent(2)) * (z - ball.obj.position.getComponent(2)));
+        //console.log(distance);
+        return distance;
+    }
+
+    computeBallRicochet(ball, distance) {
+        var ricochetVector = new THREE.Vector3();
+        ricochetVector.set(this.obj.position.getComponent(0) - ball.obj.position.getComponent(0),
+                            0, this.obj.position.getComponent(2) - ball.obj.position.getComponent(2));
+        if (distance < 2 * ballRadius) {
+            //console.log(distance);
+            var overlap = (2 * ballRadius - ricochetVector.length()) / 2;
+            ricochetVector.setLength(overlap);
+            this.nextPos.add(ricochetVector);
+        }
+        else {
+            this.nextSpeed.reflect(ricochetVector);
+            var length1 = ball.speed.length();
+            var length2 = this.speed.length();
+            this.nextSpeed.setLength((length1 + length2) / 2);
+            console.log(this.speed);
+            console.log(this.nextSpeed);
+            console.log("-----");
+        }
+    }
+
+    update(delta, index) {
+        this.speed = this.nextSpeed;
+        this.obj.position.set(this.nextPos.getComponent(0), this.nextPos.getComponent(1), this.nextPos.getComponent(2));
+        this.computePosition(delta);
+        if (this.intersectsTable())
+            this.computeTableRicochet();
+        for (var i = 0; i < nBalls; i++) {
+            if (index != i) {
+                var distance = this.intersectsBall(balls[i]);
+                if (distance <= (2 * ballRadius)) {
+                    this.computeBallRicochet(balls[i], distance);
+                }
+            }
+        }
     }
 }
 
@@ -54,7 +122,7 @@ class WhiteBall extends Ball {
         var sphere = new THREE.SphereGeometry(ballRadius, 32, 32);
         var mesh = new THREE.Mesh(sphere, pinkMaterial);
         this.obj = new THREE.Object3D().add(mesh);
-    }
+    }   
 }
 
 class Table {
@@ -113,16 +181,19 @@ class Stick {
     }
 }
 
-function createMesa() {
+function createTable() {
     var table = new Table();
-    ball1 = new Ball();
     var leftStick = new Stick(-tableDepth/2 - stickLength/2 - 5 * scale, 0, "left");
     var rightStick = new Stick(tableDepth/2 + stickLength/2 + 5 * scale, 0, "right");
     var topLeftStick = new Stick(-tableDepth/4, - tableWidth/2 - stickLength/2 - 5 * scale, "up");
     var topRightStick = new Stick(tableDepth/4, - tableWidth/2 - stickLength/2 - 5 * scale, "up");
     var bottomLeftStick = new Stick(-tableDepth/4, tableWidth/2 + stickLength/2 + 5 * scale, "down");
     var bottomRightStick = new Stick(tableDepth/4, tableWidth/2 + stickLength/2 + 5 * scale, "down");
-    scene.add(ball1.obj);
+    for (var i = 0; i < nBalls; i++) {
+        var ball = new Ball();
+        balls.push(ball);
+        scene.add(balls[i].obj);
+    }
     scene.add(table.obj);
     scene.add(leftStick.obj);
     scene.add(rightStick.obj);
@@ -136,7 +207,7 @@ function createScene() {
     'use strict';
     scene = new THREE.Scene();
     scene.add(new THREE.AxisHelper(50));
-    createMesa();
+    createTable();
 }
 
 function createCamera() {
@@ -144,9 +215,9 @@ function createCamera() {
     var width = window.innerWidth;
     var height = window.innerHeight;
     camera = new THREE.OrthographicCamera(width / - 2, width / 2, height / 2, height / - 2, near, far);
-    camera.position.x = 200;
+    camera.position.x = 0;
     camera.position.y = 200;
-    camera.position.z = 200;
+    camera.position.z = 0;
     camera.lookAt(scene.position);
 }
 
@@ -162,11 +233,10 @@ function onResize() {
 function render() {
     'use strict';
     renderer.render(scene, camera);
-    var elapsedTime = clock.getElapsedTime();
-    ball1.update(elapsedTime);
-    // console.log(elapsedTime.valueOf());
-    //console.log(ball1.obj.position);
-
+    var delta = clock.getDelta();
+    for (var i = 0; i < nBalls; i++) {
+        balls[i].update(delta, i);
+    }
 }
 
 function init() {
