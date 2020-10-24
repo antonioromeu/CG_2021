@@ -374,7 +374,7 @@ function mobile() {
     g1.rotateZ(Math.PI/2);
     g1.position.set(-7 * scale, -2 * scale, 0 * scale);
 
-    h0 = new THREE.Mesh(haste(4), material);
+    h0 = new THREE.Mesh(haste(8), material);
     g0 = new THREE.Object3D();
     g0.add(h0);
     g0.add(g1);
