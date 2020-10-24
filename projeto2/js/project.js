@@ -9,7 +9,7 @@ var stickSmallRadius = 0.9 * scale, stickBigRadius = 3 * scale;
 var tableHoleRadius = 5 * scale;
 var tableWidth = 100 * scale, tableDepth = 200 * scale;
 var minSpeed = -10, maxSpeed = 10;
-var minDistance = 1/5;
+var minDistance = 1;
 var balls = [];
 var nBalls = 16;
 var pink = new THREE.Color("rgb(170, 0, 100)");
@@ -87,41 +87,17 @@ class Ball {
     computeBallRicochet(ball, distance) {
         var ricochetVector = new THREE.Vector3();
         ricochetVector.set(this.obj.position.getComponent(0) - ball.obj.position.getComponent(0), 0, this.obj.position.getComponent(2) - ball.obj.position.getComponent(2));
-        
-        if (distance < 2 * ballRadius + minDistance) {
-            //console.log(distance);
-            var overlap = (2 * ballRadius - ricochetVector.length()) / 2;
-            ricochetVector.setLength(overlap);
-            this.nextPos.add(ricochetVector);
-        }
-        else {
-            this.nextSpeed.reflect(ricochetVector).negate();
-            console.log(ricochetVector);
-            console.log(this.nextSpeed.reflect(ricochetVector).negate();
-            //ball.nextSpeed.reflect(ricochetVector).negate();
-            var length1 = ball.speed.length();
-            var length2 = this.speed.length();
-            this.nextSpeed.setLength((length1 + length2) / 2);
-            //ball.nextSpeed.setLength((length1 + length2) / 2);
-        }
+        var overlap = (2 * ballRadius - ricochetVector.length()) / 2;
+        ricochetVector.setLength(overlap + minDistance);
+        this.nextPos.add(ricochetVector);
+        var angle = this.nextSpeed.angleTo(ricochetVector);
+        var axis = new THREE.Vector3(0, 1, 0);
+        angle = 2 * angle - Math.PI;  
+        this.nextSpeed.applyAxisAngle(axis, angle);
+        var length1 = ball.speed.length();
+        var length2 = this.speed.length();
+        this.nextSpeed.setLength((length1 + length2) / 2);
     }
-    // computeBallRicochet(ball, distance) {
-    //     var ricochetVector = new THREE.Vector3();
-    //     ricochetVector.set(this.obj.position.getComponent(0) - ball.obj.position.getComponent(0),
-    //                         0, this.obj.position.getComponent(2) - ball.obj.position.getComponent(2));
-    //     if (Math.abs(distance - 2 * ballRadius) < minDistance) {
-    //         this.nextSpeed.reflect(ricochetVector);
-    //         var length1 = ball.speed.length();
-    //         var length2 = this.speed.length();
-    //         this.nextSpeed.setLength((length1 + length2) / 2);
-    //     }
-    //     else {
-    //         //console.log(distance);
-    //         var overlap = (2 * ballRadius - ricochetVector.length()) / 2;
-    //         ricochetVector.setLength(overlap);
-    //         this.nextPos.add(ricochetVector);
-    //     }
-    // }
 
     update(delta, index) {
         this.speed = this.nextSpeed;
@@ -132,7 +108,7 @@ class Ball {
         for (var i = 0; i < nBalls; i++) {
             if (index != i) {
                 var distance = this.intersectsBall(balls[i]);
-                if (distance <= (2 * ballRadius)) {
+                if (distance < (2 * ballRadius)) {
                     this.computeBallRicochet(balls[i], distance);
                 }
             }
