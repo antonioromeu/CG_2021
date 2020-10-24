@@ -1,5 +1,5 @@
 var camera, scene, renderer;
-var scale = 4;
+var scale = 3;
 var clock;
 var near = 1, far = 1500 * scale;
 var camera1, camera2, camera3;
@@ -10,14 +10,20 @@ var tableHoleRadius = 5 * scale;
 var tableWidth = 100 * scale, tableDepth = 200 * scale;
 var minSpeed = -10, maxSpeed = 10;
 var minDistance = 1;
+var holes = [];
 var balls = [];
 var nBalls = 16;
 var pink = new THREE.Color("rgb(170, 0, 100)");
 var yellow = new THREE.Color("rgb(255, 200, 0)");
 var grey = new THREE.Color("rgb(150, 150, 150)");
-var ballMaterial = new THREE.MeshBasicMaterial({ color: pink, wireframe: true });
-var stickMaterial = new THREE.MeshBasicMaterial({ color: yellow, wireframe: true });
-var planeMaterial = new THREE.MeshBasicMaterial({ color: grey, side: THREE.DoubleSide, wireframe: true });
+var green = new THREE.Color("rgb(0, 100, 0)");
+var brown = new THREE.Color("rgb(40, 26, 13)");
+var holeMaterial = new THREE.MeshBasicMaterial({ color: yellow, wireframe: false });
+var ballMaterial = new THREE.MeshBasicMaterial({ color: pink, wireframe: false });
+var stickMaterial = new THREE.MeshBasicMaterial({ color: yellow, wireframe: false });
+var planeMaterial = new THREE.MeshBasicMaterial({ color: grey, wireframe: false });
+var baseMaterial = new THREE.MeshBasicMaterial({ color: green, wireframe: false });
+var wallMaterial = new THREE.MeshBasicMaterial({ color: brown, wireframe: false });
 
 function getRandomArbitrary(min, max) {
     return Math.random() * (max - min) + min;
@@ -54,25 +60,18 @@ class Ball {
     computeTableRicochet() {
         var x = this.obj.position.getComponent(0);
         var z = this.obj.position.getComponent(2);
-        var flag = 0;
-        if (Math.abs(-tableDepth/2 + ballRadius - x) < minDistance || Math.abs(tableDepth/2 - ballRadius - x) < minDistance) {
+        if (Math.abs(-tableDepth/2 + ballRadius - x) < minDistance || Math.abs(tableDepth/2 - ballRadius - x) < minDistance)
             this.nextSpeed.setComponent(0, -this.nextSpeed.getComponent(0));
-            flag = 1;
-        }
-        if (Math.abs(-tableWidth/2 + ballRadius - z) < minDistance || Math.abs(tableWidth/2 - ballRadius - z) < minDistance) {
+        if (Math.abs(-tableWidth/2 + ballRadius - z) < minDistance || Math.abs(tableWidth/2 - ballRadius - z) < minDistance)
             this.nextSpeed.setComponent(2, -this.nextSpeed.getComponent(2));
-            flag = 1;
-        }
-        if (!flag) {
-            if (x < (-tableDepth/2 + ballRadius))
-                this.nextPos.setComponent(0, -tableDepth/2 + ballRadius);
-            if (x > (tableDepth/2 - ballRadius))
-                this.nextPos.setComponent(0, tableDepth/2 - ballRadius);
-            if (z < (-tableWidth/2 + ballRadius))
-                this.nextPos.setComponent(2, -tableWidth/2 + ballRadius);
-            if (z > (tableWidth/2 - ballRadius))
-                this.nextPos.setComponent(2, tableWidth/2 - ballRadius);
-        }
+        if (x < (-tableDepth/2 + ballRadius))
+            this.nextPos.setComponent(0, -tableDepth/2 + ballRadius);
+        if (x > (tableDepth/2 - ballRadius))
+            this.nextPos.setComponent(0, tableDepth/2 - ballRadius);
+        if (z < (-tableWidth/2 + ballRadius))
+            this.nextPos.setComponent(2, -tableWidth/2 + ballRadius);
+        if (z > (tableWidth/2 - ballRadius))
+            this.nextPos.setComponent(2, tableWidth/2 - ballRadius);
     }
     
     intersectsBall(ball) {
@@ -80,23 +79,50 @@ class Ball {
         var z = this.nextPos.getComponent(2);
         var distance = Math.sqrt((x - ball.obj.position.getComponent(0)) * (x - ball.obj.position.getComponent(0)) +
                                  (z - ball.obj.position.getComponent(2)) * (z - ball.obj.position.getComponent(2)));
-        //console.log(distance);
-        return distance;
+        return distance < 2 * ballRadius;
     }
 
-    computeBallRicochet(ball, distance) {
+    intersectsHole(hole) {
+        var x = this.nextPos.getComponent(0);
+        var z = this.nextPos.getComponent(2);
+        var distance = Math.sqrt((x - hole.position.getComponent(0)) * (x - hole.position.getComponent(0)) +
+                                 (z - hole.position.getComponent(2)) * (z - hole.position.getComponent(2)));
+        return distance < ballRadius + scale;
+    }
+
+    intersectsHole(hole) {
+        var x = this.nextPos.getComponent(0);
+        var z = this.nextPos.getComponent(2);
+        var distance = Math.sqrt((x - hole.position.getComponent(0)) * (x - hole.position.getComponent(0)) +
+                                 (z - hole.position.getComponent(2)) * (z - hole.position.getComponent(2)));
+        return distance < ballRadius + scale;
+    }
+
+    computeBallRicochet(ball) {
         var ricochetVector = new THREE.Vector3();
         ricochetVector.set(this.obj.position.getComponent(0) - ball.obj.position.getComponent(0), 0, this.obj.position.getComponent(2) - ball.obj.position.getComponent(2));
         var overlap = (2 * ballRadius - ricochetVector.length()) / 2;
-        ricochetVector.setLength(overlap + minDistance);
+        ricochetVector.setLength(overlap + minDistance * 2);
         this.nextPos.add(ricochetVector);
         var angle = this.nextSpeed.angleTo(ricochetVector);
         var axis = new THREE.Vector3(0, 1, 0);
-        angle = 2 * angle - Math.PI;  
+        angle = 2 * angle - Math.PI;
         this.nextSpeed.applyAxisAngle(axis, angle);
         var length1 = ball.speed.length();
         var length2 = this.speed.length();
         this.nextSpeed.setLength((length1 + length2) / 2);
+    }
+
+    computeFall(hole) {
+        var directionVector = new THREE.Vector3();
+        directionVector.set(hole.position.getComponent(0) - this.obj.position.getComponent(0), 0, hole.position.getComponent(2) - this.obj.position.getComponent(2));
+        if (Math.sqrt((this.nextPos.getComponent(0) - hole.position.getComponent(0)) * (this.nextPos.getComponent(0) - hole.position.getComponent(0)) +
+            (this.nextPos.getComponent(2) - hole.position.getComponent(2)) * (this.nextPos.getComponent(2) - hole.position.getComponent(2))) <= scale)
+            this.nextSpeed = new THREE.Vector3(0, -1, 0);
+        else {
+            this.nextPos.add(directionVector);
+            this.nextSpeed.add(directionVector);
+        }
     }
 
     update(delta, index) {
@@ -106,12 +132,11 @@ class Ball {
         if (this.intersectsTable())
             this.computeTableRicochet();
         for (var i = 0; i < nBalls; i++) {
-            if (index != i) {
-                var distance = this.intersectsBall(balls[i]);
-                if (distance < (2 * ballRadius)) {
-                    this.computeBallRicochet(balls[i], distance);
-                }
-            }
+            if (index != i && this.intersectsBall(balls[i]))
+                this.computeBallRicochet(balls[i]);
+            for (var j = 0; j < 6; j++)
+                if (balls[i].intersectsHole(holes[j]))
+                    balls[i].computeFall(holes[j]);
         }
     }
 }
@@ -132,11 +157,18 @@ class Table {
         var basePlane = new THREE.PlaneGeometry(tableWidth, tableDepth, 10);
         var longWallPlane = new THREE.PlaneGeometry(tableDepth, tableHeight, 10, 10);
         var smallWallPlan = new THREE.PlaneGeometry(tableWidth, tableHeight, 10, 10);
-        var base = new THREE.Mesh(basePlane, planeMaterial);
-        var leftWall = new THREE.Mesh(longWallPlane, planeMaterial);
-        var rightWall = new THREE.Mesh(longWallPlane, planeMaterial);
-        var topWall = new THREE.Mesh(smallWallPlan, planeMaterial);
-        var bottomWall = new THREE.Mesh(smallWallPlan, planeMaterial);
+        var circle = new THREE.CircleGeometry(ballRadius + scale, 32);
+        var base = new THREE.Mesh(basePlane, baseMaterial);
+        var leftWall = new THREE.Mesh(longWallPlane, wallMaterial);
+        var rightWall = new THREE.Mesh(longWallPlane, wallMaterial);
+        var topWall = new THREE.Mesh(smallWallPlan, wallMaterial);
+        var bottomWall = new THREE.Mesh(smallWallPlan, wallMaterial);
+        var hole1 = new THREE.Mesh(circle, holeMaterial);
+        var hole2 = new THREE.Mesh(circle, holeMaterial);
+        var hole3 = new THREE.Mesh(circle, holeMaterial);
+        var hole4 = new THREE.Mesh(circle, holeMaterial);
+        var hole5 = new THREE.Mesh(circle, holeMaterial);
+        var hole6 = new THREE.Mesh(circle, holeMaterial);
         var table = new THREE.Object3D();
         base.rotateZ(Math.PI/2);
         base.rotateY(Math.PI/2);
@@ -147,10 +179,40 @@ class Table {
         bottomWall.position.set(tableDepth/2, tableHeight/2, 0);
         topWall.rotateY(Math.PI/2);
         bottomWall.rotateY(Math.PI/2);
+        hole1.position.set(-tableDepth/2 + ballRadius + scale, 0.1, -tableWidth/2 + ballRadius + scale);
+        hole2.position.set(0, 0.1, -tableWidth/2 + ballRadius + scale);
+        hole3.position.set(tableDepth/2 - ballRadius - scale, 0.1, -tableWidth/2 + ballRadius + scale);
+        hole4.position.set(tableDepth/2 - ballRadius - scale, 0.1, tableWidth/2 - ballRadius - scale);
+        hole5.position.set(0, 0.1, tableWidth/2 - ballRadius - scale);
+        hole6.position.set(-tableDepth/2 + ballRadius + scale, 0.1, tableWidth/2 - ballRadius - scale);
+        hole1.rotateZ(Math.PI/2);
+        hole1.rotateY(Math.PI/2);
+        hole2.rotateZ(Math.PI/2);
+        hole2.rotateY(Math.PI/2);
+        hole3.rotateZ(Math.PI/2);
+        hole3.rotateY(Math.PI/2);
+        hole4.rotateZ(Math.PI/2);
+        hole4.rotateY(Math.PI/2);
+        hole5.rotateZ(Math.PI/2);
+        hole5.rotateY(Math.PI/2);
+        hole6.rotateZ(Math.PI/2);
+        hole6.rotateY(Math.PI/2);
+        holes.push(hole1);
+        holes.push(hole2);
+        holes.push(hole3);
+        holes.push(hole4);
+        holes.push(hole5);
+        holes.push(hole6);
         table.add(leftWall);
         table.add(rightWall);
         table.add(topWall);
         table.add(bottomWall);
+        table.add(hole1);
+        table.add(hole2);
+        table.add(hole3);
+        table.add(hole4);
+        table.add(hole5);
+        table.add(hole6);
         this.obj = table;
     }
 }
@@ -217,7 +279,7 @@ function createCamera() {
     var height = window.innerHeight;
     camera = new THREE.OrthographicCamera(width / - 2, width / 2, height / 2, height / - 2, near, far);
     camera.position.x = 0;
-    camera.position.y = 200;
+    camera.position.y = 400;
     camera.position.z = 0;
     camera.lookAt(scene.position);
 }
