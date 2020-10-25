@@ -43,11 +43,16 @@ class Ball {
         this.nextPos = new THREE.Vector3(x, y, z);
         this.nextSpeed = new THREE.Vector3();
         this.nextSpeed = this.speed;
+        this.falling = false;
     }
 
     computePosition(delta) {
-        this.nextSpeed.multiplyScalar(1 - delta);
-        this.nextPos.add(this.nextSpeed);
+        // if (!this.falling) {
+            this.nextSpeed.multiplyScalar(1 - delta);
+            this.nextPos.add(this.nextSpeed);
+        // }
+        // this.nextSpeed.multiplyScalar(1 + delta);
+        // this.nextPos.add(this.nextSpeed);
     }
     
     intersectsTable() {
@@ -60,18 +65,18 @@ class Ball {
     computeTableRicochet() {
         var x = this.nextPos.getComponent(0);
         var z = this.nextPos.getComponent(2);
-        if (Math.abs(-tableDepth/2 + ballRadius - x) < minDistance || Math.abs(tableDepth/2 - ballRadius - x) < minDistance)
+        if (x <= (-tableDepth/2 + ballRadius) || x >= (tableDepth/2 - ballRadius))
             this.nextSpeed.setComponent(0, -this.nextSpeed.getComponent(0));
-        if (Math.abs(-tableWidth/2 + ballRadius - z) < minDistance || Math.abs(tableWidth/2 - ballRadius - z) < minDistance)
+        if (z <= (-tableWidth/2 + ballRadius) || z >= (tableWidth/2 - ballRadius))
             this.nextSpeed.setComponent(2, -this.nextSpeed.getComponent(2));
-        if (x < (-tableDepth/2 + ballRadius))
-            this.nextPos.setComponent(0, -tableDepth/2 + ballRadius);
-        if (x > (tableDepth/2 - ballRadius))
-            this.nextPos.setComponent(0, tableDepth/2 - ballRadius);
-        if (z < (-tableWidth/2 + ballRadius))
-            this.nextPos.setComponent(2, -tableWidth/2 + ballRadius);
-        if (z > (tableWidth/2 - ballRadius))
-            this.nextPos.setComponent(2, tableWidth/2 - ballRadius);
+        if (x <= (-tableDepth/2 + ballRadius))
+            this.nextPos.setComponent(0, -tableDepth/2 + ballRadius + minDistance);
+        if (x >= (tableDepth/2 - ballRadius))
+            this.nextPos.setComponent(0, tableDepth/2 - ballRadius - minDistance);
+        if (z <= (-tableWidth/2 + ballRadius))
+            this.nextPos.setComponent(2, -tableWidth/2 + ballRadius + minDistance);
+        if (z >= (tableWidth/2 - ballRadius))
+            this.nextPos.setComponent(2, tableWidth/2 - ballRadius - minDistance);
     }
     
     intersectsBall(ball) {
@@ -106,10 +111,12 @@ class Ball {
         var x = this.nextPos.getComponent(0);
         var z = this.nextPos.getComponent(2);
         directionVector.set(hole.position.getComponent(0) - x, 0, hole.position.getComponent(2) - z);
-        if (distance <= 2 * scale)
+        if (distance <= ballRadius / scale) {
             this.nextSpeed = new THREE.Vector3(0, -1, 0);
+            this.falling = true;
+        }
         else {
-            // this.nextPos.add(directionVector);
+            console.log("vai malandra!");
             var l = this.nextSpeed.length;
             directionVector.setLength(l);
             this.nextSpeed.add(directionVector);
@@ -123,19 +130,22 @@ class Ball {
     }
 
     checkCollisions(delta, index) {
-        if (this.intersectsTable())
-            this.computeTableRicochet();
-        for (var i = index + 1; i < nBalls; i++) {
-            if (this.intersectsBall(balls[i])) {
-                this.computeBallRicochet(balls[i]);
-            }
-            for (var j = 0; j < 6; j++) {
-                var distance = balls[i].intersectsHole(holes[j]);
-                if (distance < ballRadius + scale) {
-                    balls[i].computeFall(holes[j], distance);
+        // if (!balls[index].falling) {
+            if (this.intersectsTable())
+                this.computeTableRicochet();
+            for (var i = index + 1; i < nBalls; i++) {
+
+                for (var j = 0; j < 6; j++) {
+                    var distance = balls[i].intersectsHole(holes[j]);
+                    if (distance < ballRadius + scale) {
+                        balls[i].computeFall(holes[j], distance);
+                    }
+                }
+                if (this.intersectsBall(balls[i])) {
+                    this.computeBallRicochet(balls[i]);
                 }
             }
-        }
+        // }
     }
 }
 
