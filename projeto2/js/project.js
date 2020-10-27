@@ -1,7 +1,7 @@
-var camera, scene, renderer;
+var camera, orthographicCamera, perspectiveCamera, scene, renderer;
 var scale = 3;
 var clock;
-var near = 1, far = 1500 * scale;
+var near = 1, far = 1000 * scale;
 var camera1, camera2, camera3;
 var ballRadius = 5 * scale;
 var stickLength = 80 * scale;
@@ -12,16 +12,21 @@ var minSpeed = -10, maxSpeed = 10;
 var minDistance = 1;
 var holes = [];
 var balls = [];
+var sticks = [];
 var nBalls = 16;
-var pink = new THREE.Color("rgb(170, 0, 100)");
-var yellow = new THREE.Color("rgb(255, 200, 0)");
-var grey = new THREE.Color("rgb(150, 150, 150)");
-var green = new THREE.Color("rgb(0, 100, 0)");
-var brown = new THREE.Color("rgb(40, 26, 13)");
-var holeMaterial = new THREE.MeshBasicMaterial({ color: yellow, wireframe: false });
+var nSticks = 6;
+var pink = new THREE.Color(0xb57aae);
+var blue = new THREE.Color(0x55647e );
+var green = new THREE.Color(0x64b1a4);
+var ambar = new THREE.Color(0xcbbba1);
+var brown = new THREE.Color(0x8e8270);
+var white = new THREE.Color(0xffffff);
+var holeMaterial = new THREE.MeshBasicMaterial({ color: ambar, wireframe: false });
 var ballMaterial = new THREE.MeshBasicMaterial({ color: pink, wireframe: false });
-var stickMaterial = new THREE.MeshBasicMaterial({ color: yellow, wireframe: false });
-var planeMaterial = new THREE.MeshBasicMaterial({ color: grey, wireframe: false });
+var whiteBallMaterial = new THREE.MeshBasicMaterial({ color: white, wireframe: false });
+var stickMaterial = new THREE.MeshBasicMaterial({ color: blue, wireframe: false });
+var planeMaterial = new THREE.MeshBasicMaterial({ color: blue, wireframe: false });
+planeMaterial.transparent = true;
 var baseMaterial = new THREE.MeshBasicMaterial({ color: green, wireframe: false });
 var wallMaterial = new THREE.MeshBasicMaterial({ color: brown, wireframe: false });
 
@@ -35,26 +40,37 @@ class Ball {
         var x = getRandomArbitrary(-tableDepth/2 + ballRadius, tableDepth/2 - ballRadius);
         var y = ballRadius;
         this.speed = new THREE.Vector3(getRandomArbitrary(minSpeed, maxSpeed), 0, getRandomArbitrary(minSpeed, maxSpeed));
-        var sphere = new THREE.SphereGeometry(ballRadius, 32, 32);
+        var sphere = new THREE.SphereGeometry(ballRadius, 8, 8);
         var mesh = new THREE.Mesh(sphere, ballMaterial);
         var ball = new THREE.Object3D().add(mesh);
+        ball.add(new THREE.AxisHelper(2 * ballRadius));
         ball.position.set(x, y, z);
+
+
+        var vec = new THREE.Vector3(1, 0, 0);
+        this.angle = vec.angleTo(this.speed);
+        if (this.speed.getComponent(2) > 0) this.angle = -this.angle;
+        ball.rotateY(this.angle);
+
         this.obj = ball;
+
         this.nextPos = new THREE.Vector3(x, y, z);
         this.nextSpeed = new THREE.Vector3();
-        this.nextSpeed = this.speed;
+        this.nextSpeed.copy(this.speed);
         this.falling = false;
+
     }
 
     computePosition(delta) {
-        // if (!this.falling) {
+        if (!this.falling) {  
             this.nextSpeed.multiplyScalar(1 - delta);
-            this.nextPos.add(this.nextSpeed);
-        // }
-        // this.nextSpeed.multiplyScalar(1 + delta);
-        // this.nextPos.add(this.nextSpeed);
+        }
+        else {
+            this.nextSpeed.multiplyScalar((1 + delta) * scale);
+        }
+        this.nextPos.add(this.nextSpeed);
     }
-    
+
     intersectsTable() {
         return !(this.nextPos.getComponent(0) >= (-tableDepth/2 + ballRadius) &&
                 this.nextPos.getComponent(0) <= (tableDepth/2 - ballRadius) &&
@@ -78,8 +94,9 @@ class Ball {
         if (z >= (tableWidth/2 - ballRadius))
             this.nextPos.setComponent(2, tableWidth/2 - ballRadius - minDistance);
     }
-    
+
     intersectsBall(ball) {
+        if (ball.falling) return false;
         var x = this.nextPos.getComponent(0);
         var z = this.nextPos.getComponent(2);
         var distance = Math.sqrt((x - ball.nextPos.getComponent(0)) * (x - ball.nextPos.getComponent(0)) +
@@ -116,7 +133,6 @@ class Ball {
             this.falling = true;
         }
         else {
-            console.log("vai malandra!");
             var l = this.nextSpeed.length;
             directionVector.setLength(l);
             this.nextSpeed.add(directionVector);
@@ -124,9 +140,26 @@ class Ball {
     }
 
     update(delta) {
-        this.speed = this.nextSpeed;
+        this.obj.rotateY(-this.angle);
+        var vec = new THREE.Vector3(1, 0, 0);
+        this.angle = vec.angleTo(this.nextSpeed);
+        if (this.speed.getComponent(2) > 0) this.angle = -this.angle;
+        // this.obj.rotateY(this.angle);
+        this.obj.rotateY(this.angle);
+        
+        var dx = this.nextPos.getComponent(0) - this.obj.position.getComponent(0);
+        var dz = this.nextPos.getComponent(2) - this.obj.position.getComponent(2);
+        var d = Math.sqrt((dx * dx) + (dz * dz));
+
+        // console.log(this.obj.rotation.z);
+        // this.obj.rotation.z -= d / ballRadius;
+        // var axis = new THREE.Vector3(0, 0, dz);
+        // this.obj.rotateOnAxis(axis, d / ballRadius);
+ 
+        this.speed.copy(this.nextSpeed);
         this.obj.position.set(this.nextPos.getComponent(0), this.nextPos.getComponent(1), this.nextPos.getComponent(2));
         this.computePosition(delta);
+
     }
 
     checkCollisions(delta, index) {
@@ -156,7 +189,7 @@ class WhiteBall extends Ball {
         var sphere = new THREE.SphereGeometry(ballRadius, 32, 32);
         var mesh = new THREE.Mesh(sphere, pinkMaterial);
         this.obj = new THREE.Object3D().add(mesh);
-    }   
+    }
 }
 
 class Table {
@@ -230,12 +263,15 @@ class Stick {
         this.xPos = xPos;
         this.zPos = zPos;
         this.yPos = ballRadius;
+        this.mesh = new THREE.MeshBasicMaterial({ color: pink, wireframe: false });
         let stick = new THREE.CylinderGeometry(stickSmallRadius, stickBigRadius, stickLength, 6);
-        this.obj = new THREE.Object3D().add(new THREE.Mesh(stick, planeMaterial));
+        this.obj = new THREE.Object3D().add(this.mesh);
         this.obj.rotateZ(Math.PI/2);
+        this.select = false;
+        
         switch (direction) {
             case "down":
-                this.angle = -Math.PI/2; 
+                this.angle = -Math.PI/2;
                 break;
             case "up":
                 this.angle = Math.PI/2;
@@ -260,24 +296,27 @@ function createTable() {
     var topRightStick = new Stick(tableDepth/4, - tableWidth/2 - stickLength/2 - 5 * scale, "up");
     var bottomLeftStick = new Stick(-tableDepth/4, tableWidth/2 + stickLength/2 + 5 * scale, "down");
     var bottomRightStick = new Stick(tableDepth/4, tableWidth/2 + stickLength/2 + 5 * scale, "down");
+    sticks.push(leftStick);
+    sticks.push(rightStick);
+    sticks.push(topLeftStick);
+    sticks.push(topRightStick);
+    sticks.push(bottomLeftStick);
+    sticks.push(bottomRightStick);
     for (var i = 0; i < nBalls; i++) {
         var ball = new Ball();
         balls.push(ball);
         scene.add(balls[i].obj);
     }
+    for (var i = 0; i < sticks.length; i++) {
+        scene.add(sticks[i].obj);
+    }
     scene.add(table.obj);
-    scene.add(leftStick.obj);
-    scene.add(rightStick.obj);
-    scene.add(topLeftStick.obj);
-    scene.add(topRightStick.obj);
-    scene.add(bottomLeftStick.obj);
-    scene.add(bottomRightStick.obj);
 }
 
 function createScene() {
     'use strict';
     scene = new THREE.Scene();
-    scene.add(new THREE.AxisHelper(50));
+    scene.background = new THREE.Color(0xdfd6c6);
     createTable();
 }
 
@@ -285,10 +324,15 @@ function createCamera() {
     'use strict';
     var width = window.innerWidth;
     var height = window.innerHeight;
-    camera = new THREE.OrthographicCamera(width / - 2, width / 2, height / 2, height / - 2, near, far);
-    camera.position.x = 0;
-    camera.position.y = 400;
-    camera.position.z = 0;
+    orthographicCamera = new THREE.OrthographicCamera(width / - 2, width / 2, height / 2, height / - 2, near, far);
+    orthographicCamera.position.x = 0;
+    orthographicCamera.position.y = 200 * scale;
+    orthographicCamera.position.z = 0;
+    perspectiveCamera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, near, far);
+    perspectiveCamera.position.x = 150 * scale;
+    perspectiveCamera.position.y = 150 * scale;
+    perspectiveCamera.position.z = 150* scale;
+    camera = orthographicCamera;
     camera.lookAt(scene.position);
 }
 
@@ -309,7 +353,15 @@ function render() {
         balls[i].update(delta, i);
     }
     for (var i = 0; i < nBalls; i++) {
-        balls[i].checkCollisions(delta, i);
+        if (!balls[i].falling)
+            balls[i].checkCollisions(delta, i);
+    }
+            
+    for (var i = 0; i < nSticks; i++) {
+        if (sticks[i].select) {
+            sticks[i].mesh = new THREE.MeshBasicMaterial({ color: pink, wireframe: false });
+        }
+        else sticks[i].mesh = new THREE.MeshBasicMaterial({ color: blue, wireframe: false });;
     }
 }
 
@@ -319,7 +371,7 @@ function init() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
     clock = new THREE.Clock();
-    
+
     createScene();
     createCamera();
     render();
@@ -355,15 +407,51 @@ function onKeyDown(e) {
         case 99: // 3 side view
             camera3 = true;
             break;
-        case 52: // 4 alternate mesh
-        case 100: // 4 alternate mesh
-            material.wireframe = !material.wireframe;
-            yellowMaterial.wireframe = !yellowMaterial.wireframe;
-            orangeMaterial.wireframe = !orangeMaterial.wireframe;
-            greenMaterial.wireframe = !greenMaterial.wireframe;
-            pinkMaterial.wireframe = !pinkMaterial.wireframe;
-            blueMaterial.wireframe = !blueMaterial.wireframe;
+
+
+        case 52: // 4 select stick
+        case 100: // 4 select stick
+            sticks[0].select = !sticks[0].select;
+            for (var i = 1; i < 6; i ++)
+                sticks[i].select = false;
             break;
+        case 53: // 5 select stick
+        case 101: // 5 select stick
+            sticks[1].select = !sticks[1].select;
+            for (var i = 0; i < 6; i ++)
+                if (i != 1)
+                    sticks[i].select = false;
+            break;
+        case 54: // 6 select stick
+        case 102: // 6 select stick
+            sticks[2].select = !sticks[2].select;
+            for (var i = 0; i < 6; i ++)
+                if (i != 2)
+                    sticks[i].select = false
+            break;
+        case 55: // 7 select stick
+        case 103: // 7 select stick
+            sticks[3].select = !sticks[3].select;
+            for (var i = 0; i < 6; i ++)
+                if (i != 3)
+                    sticks[i].select = false
+            break;
+        case 56: // 8 select stick
+        case 104: // 8 select stick
+            sticks[4].select = !sticks[4].select;
+            for (var i = 0; i < 6; i ++)
+                if (i != 4)
+                    sticks[i].select = false
+            break;
+        case 57: // 9 select stick
+        case 105: // 9 select stick
+            sticks[5].select = !sticks[5].select;
+            for (var i = 0; i < 6; i ++)
+                if (i != 5)
+                    sticks[i].select = false
+            break;
+
+
         case 81: // Q/q --- rodar para a esquerda angulo v1
             rotate_v1_l = true;
             break;
@@ -438,7 +526,7 @@ function animate() {
     /*
     if (leftArrow)
         g0.position.x--;
-    
+
     if (topArrow)
         g0.position.z++;
 
@@ -449,21 +537,26 @@ function animate() {
         g0.position.z--;
     */
     if (camera1) {
-        camera.position.x = 0;
-        camera.position.y = 0;
-        camera.position.z = 200;
+        orthographicCamera.position.x = 0;
+        orthographicCamera.position.y = 400 * scale;
+        orthographicCamera.position.z = 0;
+        camera = orthographicCamera;
     }
 
     else if (camera2) {
-        camera.position.x = 0;
-        camera.position.y = 200;
-        camera.position.z = 0;
+        // perspectiveCamera.position.x = 0;
+        // camera.position.y = 200;
+        // camera.position.z = 0;
+        camera = perspectiveCamera;
+
     }
 
     else if (camera3) {
-        camera.position.x = 200;
-        camera.position.y = 0;
-        camera.position.z = 0;
+        orthographicCamera.position.x = 400 * scale;
+        orthographicCamera.position.y = 0;
+        orthographicCamera.position.z = 0;
+        camera = orthographicCamera;
+
     }
 
     /*
