@@ -14,6 +14,7 @@ var holes = [];
 var balls = [];
 var sticks = [];
 var nBalls = 16;
+var newNrBalls = 16;
 var nSticks = 6;
 var pink = new THREE.Color(0xb57aae);
 var blue = new THREE.Color(0x55647e );
@@ -22,13 +23,17 @@ var ambar = new THREE.Color(0xcbbba1);
 var brown = new THREE.Color(0x8e8270);
 var white = new THREE.Color(0xffffff);
 var holeMaterial = new THREE.MeshBasicMaterial({ color: ambar, wireframe: false });
-var ballMaterial = new THREE.MeshBasicMaterial({ color: pink, wireframe: false });
 var whiteBallMaterial = new THREE.MeshBasicMaterial({ color: white, wireframe: false });
+var ballMaterial = new THREE.MeshBasicMaterial({ color: pink, wireframe: true });
 var stickMaterial = new THREE.MeshBasicMaterial({ color: blue, wireframe: false });
+var highlightMaterial = new THREE.MeshBasicMaterial({ color: pink, wireframe: false });
 var planeMaterial = new THREE.MeshBasicMaterial({ color: blue, wireframe: false });
-planeMaterial.transparent = true;
 var baseMaterial = new THREE.MeshBasicMaterial({ color: green, wireframe: false });
 var wallMaterial = new THREE.MeshBasicMaterial({ color: brown, wireframe: false });
+var sticksMat = [stickMaterial, stickMaterial, stickMaterial, stickMaterial, stickMaterial, stickMaterial];
+var leftArrow = false;
+var rightArrow = false;
+var spaceKey = false;
 
 function getRandomArbitrary(min, max) {
     return Math.random() * (max - min) + min;
@@ -144,7 +149,6 @@ class Ball {
         var vec = new THREE.Vector3(1, 0, 0);
         this.angle = vec.angleTo(this.nextSpeed);
         if (this.speed.getComponent(2) > 0) this.angle = -this.angle;
-        // this.obj.rotateY(this.angle);
         this.obj.rotateY(this.angle);
         
         var dx = this.nextPos.getComponent(0) - this.obj.position.getComponent(0);
@@ -155,6 +159,7 @@ class Ball {
         // this.obj.rotation.z -= d / ballRadius;
         // var axis = new THREE.Vector3(0, 0, dz);
         // this.obj.rotateOnAxis(axis, d / ballRadius);
+        // this.obj.rotateZ(-d / ballRadius);
  
         this.speed.copy(this.nextSpeed);
         this.obj.position.set(this.nextPos.getComponent(0), this.nextPos.getComponent(1), this.nextPos.getComponent(2));
@@ -182,15 +187,21 @@ class Ball {
     }
 }
 
-class WhiteBall extends Ball {
-    constructor(xPos, zPos) {
-        this.xPos = xPos;
-        this.zPos = zPos;
-        var sphere = new THREE.SphereGeometry(ballRadius, 32, 32);
-        var mesh = new THREE.Mesh(sphere, pinkMaterial);
-        this.obj = new THREE.Object3D().add(mesh);
-    }
-}
+// class WhiteBall extends Ball {
+//     constructor() {
+//         super();
+//         this.speed = new THREE.Vector3();
+//         this.nextSpeed = new THREE.Vector3();
+//         this.angle = 0;
+//         this.nextPos = new THREE.Vector3();
+//         var sphere = new THREE.SphereGeometry(ballRadius, 32, 32);
+//         var mesh = new THREE.Mesh(sphere, whiteBallMaterial);
+//         this.obj = new THREE.Object3D().add(mesh);
+//         this.obj.position.set(0, 4 * ballRadius, 0);
+//     }
+
+//     // update(delta) { super.update(delta); }
+// }
 
 class Table {
     constructor() {
@@ -263,9 +274,23 @@ class Stick {
         this.xPos = xPos;
         this.zPos = zPos;
         this.yPos = ballRadius;
-        this.mesh = new THREE.MeshBasicMaterial({ color: pink, wireframe: false });
-        let stick = new THREE.CylinderGeometry(stickSmallRadius, stickBigRadius, stickLength, 6);
-        this.obj = new THREE.Object3D().add(this.mesh);
+        var stick = new THREE.CylinderGeometry(stickSmallRadius, stickBigRadius, stickLength, 6);
+        this.mesh = new  THREE.Mesh(stick, new THREE.MeshBasicMaterial({ color: blue, wireframe: false }));
+        var obj = new THREE.Object3D().add(this.mesh);
+        obj.position.set(0, - stickLength / 2, 0);
+        this.rotation = 0;
+
+        this.whiteBall = new Ball(); 
+        this.whiteBall.speed = new THREE.Vector3();
+        this.whiteBall.nextSpeed = new THREE.Vector3();
+        this.whiteBall.angle = 0;
+        this.whiteBall.nextPos = new THREE.Vector3();
+        var sphere = new THREE.SphereGeometry(ballRadius, 32, 32);
+        var mesh = new THREE.Mesh(sphere, whiteBallMaterial);
+        this.whiteBall.obj = new THREE.Object3D().add(mesh);
+        this.whiteBall.obj.position.set(0, 4 * ballRadius, 0);
+
+        this.obj = new THREE.Object3D().add(obj);
         this.obj.rotateZ(Math.PI/2);
         this.select = false;
         
@@ -283,19 +308,48 @@ class Stick {
                 this.angle = Math.PI;
                 break;
         }
+        
+        this.obj.add(new THREE.AxisHelper(2 * ballRadius));
         this.obj.rotateX(this.angle);
         this.obj.position.set(this.xPos, this.yPos, this.zPos);
+    }
+
+    rotateStick() {
+        var rotation = 0.03;
+        if (this.select && (rightArrow || leftArrow)) {
+            if (leftArrow)
+                rotation = -rotation;
+            if ((this.rotation <= Math.PI / 3 && rightArrow) || (this.rotation >= -Math.PI / 3 && leftArrow)) {
+                this.rotation += rotation;
+                this.obj.rotateOnAxis(new THREE.Vector3(1,0,0), rotation);
+            }
+        }
+    }
+
+    processWhiteBall() {
+        this.obj.add(this.whiteBall.obj);
+        if (spaceKey) {
+            var ball = new Ball();
+            ball = Object.assign({}, this.whiteBall);
+            balls.push(ball);
+            nBalls += 1;
+            console.log(nBalls);
+            
+            this.obj.remove(this.whiteBall.obj);
+            console.log(balls[nBalls-1].obj.position);
+        }
+
     }
 }
 
 function createTable() {
     var table = new Table();
-    var leftStick = new Stick(-tableDepth/2 - stickLength/2 - 5 * scale, 0, "left");
-    var rightStick = new Stick(tableDepth/2 + stickLength/2 + 5 * scale, 0, "right");
-    var topLeftStick = new Stick(-tableDepth/4, - tableWidth/2 - stickLength/2 - 5 * scale, "up");
-    var topRightStick = new Stick(tableDepth/4, - tableWidth/2 - stickLength/2 - 5 * scale, "up");
-    var bottomLeftStick = new Stick(-tableDepth/4, tableWidth/2 + stickLength/2 + 5 * scale, "down");
-    var bottomRightStick = new Stick(tableDepth/4, tableWidth/2 + stickLength/2 + 5 * scale, "down");
+    var leftStick = new Stick(-tableDepth/2 - 5 * scale, 0, "left");
+    var rightStick = new Stick(tableDepth/2 + 5 * scale, 0, "right");
+    var topLeftStick = new Stick(-tableDepth/4, - tableWidth/2 - 5 * scale, "up");
+    var topRightStick = new Stick(tableDepth/4, - tableWidth/2 - 5 * scale, "up");
+    var bottomLeftStick = new Stick(-tableDepth/4, tableWidth/2 + 5 * scale, "down");
+    var bottomRightStick = new Stick(tableDepth/4, tableWidth/2 + 5 * scale, "down");
     sticks.push(leftStick);
     sticks.push(rightStick);
     sticks.push(topLeftStick);
@@ -347,22 +401,31 @@ function onResize() {
 
 function render() {
     'use strict';
+    console.log(nBalls);
     renderer.render(scene, camera);
     var delta = clock.getDelta();
     for (var i = 0; i < nBalls; i++) {
-        balls[i].update(delta, i);
+        // console.log(i);
+        balls[i].update(delta);
     }
     for (var i = 0; i < nBalls; i++) {
         if (!balls[i].falling)
             balls[i].checkCollisions(delta, i);
     }
-            
+    nBalls = newNrBalls;
     for (var i = 0; i < nSticks; i++) {
         if (sticks[i].select) {
-            sticks[i].mesh = new THREE.MeshBasicMaterial({ color: pink, wireframe: false });
+            sticks[i].mesh.material.setValues(highlightMaterial);
+            sticks[i].processWhiteBall();
         }
-        else sticks[i].mesh = new THREE.MeshBasicMaterial({ color: blue, wireframe: false });;
+        else {
+            sticks[i].mesh.material.setValues(stickMaterial);
+            sticks[i].obj.remove(sticks[i].whiteBall.obj);
+        }
+        sticks[i].rotateStick();
     }
+
+
 }
 
 function init() {
@@ -383,17 +446,14 @@ function init() {
 function onKeyDown(e) {
     'use strict';
     switch (e.keyCode) {
+        case 32: // space key
+            spaceKey = true;
+            break;
         case 37: // left arrow
             leftArrow = true;
             break;
-        case 38: // top arrow
-            topArrow = true;
-            break;
         case 39: // right arrow
             rightArrow = true;
-            break;
-        case 40: // down arrow
-            downArrow = true;
             break;
         case 49: // 1 frontal view
         case 97: // 1 frontal view
@@ -407,8 +467,6 @@ function onKeyDown(e) {
         case 99: // 3 side view
             camera3 = true;
             break;
-
-
         case 52: // 4 select stick
         case 100: // 4 select stick
             sticks[0].select = !sticks[0].select;
@@ -450,43 +508,20 @@ function onKeyDown(e) {
                 if (i != 5)
                     sticks[i].select = false
             break;
-
-
-        case 81: // Q/q --- rodar para a esquerda angulo v1
-            rotate_v1_l = true;
-            break;
-        case 87: // W/w -- rodar para a direita angulo v1
-            rotate_v1_r = true;
-            break;
-        case 65: // A/a --- rodar para a esquerda angulo v2
-            rotate_v2_l = true;
-            break;
-        case 67: // C/c --- rodar para a direita angulo v2
-            rotate_v2_r = true;
-            break;
-        case 68: // D/d --- rodar para a esquerda angulo v3
-            rotate_v3_l = true;
-            break;
-        case 90: // Z/z --- rodar para a direita angulo v3
-            rotate_v3_r = true;
-            break;
     }
 }
 
 function onKeyUp(e) {
     'use strict';
     switch (e.keyCode) {
+        case 32: // space key
+            spaceKey = false;
+            break;
         case 37: // left arrow
             leftArrow = false;
             break;
-        case 38: // top arrow
-            topArrow = false;
-            break;
         case 39: // right arrow
             rightArrow = false;
-            break;
-        case 40: // down arrow
-            downArrow = false;
             break;
         case 49: // 1 frontal view
         case 97: // 1 frontal view
@@ -499,24 +534,6 @@ function onKeyUp(e) {
         case 51: // 3 side view
         case 99: // 3 side view
             camera3 = false;
-            break;
-        case 81: // Q/q --- rodar para a esquerda angulo v1
-            rotate_v1_l = false;
-            break;
-        case 87: // W/w --- rodar para a direita angulo v1
-            rotate_v1_r = false;
-            break;
-        case 65: // A/a --- rodar para a esquerda angulo v2
-            rotate_v2_l = false;
-            break;
-        case 67: // C/c --- rodar para a direita angulo v2
-            rotate_v2_r = false;
-            break;
-        case 68: // D/d --- rodar para a esquerda angulo v3
-            rotate_v3_l = false;
-            break;
-        case 90: // Z/z --- rodar para a direita angulo v3
-            rotate_v3_r = false;
             break;
     }
 }
