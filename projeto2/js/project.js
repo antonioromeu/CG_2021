@@ -1,7 +1,7 @@
-var camera, orthographicCamera, perspectiveCamera, scene, renderer;
+var camera, orthographicCamera, perspectiveCamera2, perspectiveCamera3, scene, renderer;
 var scale = 3;
 var clock;
-var near = -10000, far = 10000 * scale;
+var near = 1, far = 10000 * scale;
 var camera1, camera2, camera3;
 var ballRadius = 5 * scale;
 var stickLength = 80 * scale;
@@ -35,6 +35,8 @@ var leftArrow = false;
 var rightArrow = false;
 var spaceKey = false;
 var ballDistance = ballRadius * 4;
+var camPos = new THREE.Vector3(0, 0, 0);
+//var camDir = new THREE.Vector3(0, 0, 0);
 
 function getRandomArbitrary(min, max) {
     return Math.random() * (max - min) + min;
@@ -143,7 +145,6 @@ class Ball {
     }
 
     update(delta) {
-
         this.obj.rotateZ(-this.d * 1.5);
         
         this.obj.rotateY(-this.angle);
@@ -161,8 +162,6 @@ class Ball {
         this.speed.copy(this.nextSpeed);
         this.obj.position.set(this.nextPos.getComponent(0), this.nextPos.getComponent(1), this.nextPos.getComponent(2));
         this.computePosition(delta);
-        
-
     }
 
     checkCollisions(delta, index) {
@@ -290,7 +289,6 @@ class Stick {
                 this.angle = Math.PI/2;
                 this.ballPos.setComponent(2, this.zPos);
                 this.ballSpeed.set(0, 0, maxSpeed);
-
                 break;
             case "right":
                 this.angle = 0;
@@ -341,7 +339,7 @@ function createTable() {
     for (var i = 0; i < nBalls; i++) {
         var z = getRandomArbitrary(-tableWidth/2 + ballRadius, tableWidth/2 - ballRadius);
         var x = getRandomArbitrary(-tableDepth/2 + ballRadius, tableDepth/2 - ballRadius);
-        var y = ballRadius; 
+        var y = ballRadius;
         var ball = new Ball(x, y, z, ballMaterial);
         balls.push(ball);
         scene.add(balls[i].obj);
@@ -366,7 +364,12 @@ function createCamera() {
     orthographicCamera.position.x = 0;
     orthographicCamera.position.y = 200 * scale;
     orthographicCamera.position.z = 0;
-    perspectiveCamera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, near, far);
+    perspectiveCamera2 = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, near, far);
+    perspectiveCamera2.position.x = 150 * scale;
+    perspectiveCamera2.position.y = 150 * scale;
+    perspectiveCamera2.position.z = 150 * scale;
+    perspectiveCamera3 = new THREE.PerspectiveCamera();
+    perspectiveCamera3 = perspectiveCamera2;
     camera = orthographicCamera;
     camera.lookAt(scene.position);
 }
@@ -409,6 +412,9 @@ function render() {
 
                 sticks[i].obj.remove(sticks[i].whiteBall.obj);
                 sticks[i].select = false;
+
+                camPos = (-speed.getComponent(0), speed.getComponent(1) + (2*ballRadius), speed.getComponent(2));
+                // camPos.setLength()
             }
         }
         else {
@@ -420,16 +426,12 @@ function render() {
 
     if (camera3 && initialBalls < nBalls) {
         var b = balls[nBalls - 1];
-        var d = new THREE.Vector3();
-        // d = b.speed;
-        d.setComponent(0, -b.obj.position.getComponent(0) - b.speed.getComponent(0));
-        d.setComponent(2, -b.obj.position.getComponent(2) - b.speed.getComponent(2));
-        d.setLength(ballDistance);
-        d.setComponent(1, ballDistance + ballRadius );
+        // var d = new THREE.Vector3();
 
-        camera.position.x = d.getComponent(0);
-        camera.position.y = d.getComponent(1);
-        camera.position.z = d.getComponent(2);
+        perspectiveCamera3.position.x = b.obj.position.getComponent(0) + camPos.getComponent(0);
+        perspectiveCamera3.position.y = b.obj.position.getComponent(1) + camPos.getComponent(1);
+        perspectiveCamera3.position.z = b.obj.position.getComponent(2) + camPos.getComponent(2);
+        camera = perspectiveCamera3;
         camera.lookAt(b.obj.position);
     }
 }
@@ -549,24 +551,24 @@ function animate() {
     }
 
     else if (camera2) {
-        camera = perspectiveCamera;
-        camera.position.x = 150 * scale;
-        camera.position.y = 150 * scale;
-        camera.position.z = 150 * scale;
+        perspectiveCamera2.position.x = 150 * scale;
+        perspectiveCamera2.position.y = 150 * scale;
+        perspectiveCamera2.position.z = 150 * scale;
+        camera = perspectiveCamera2;
         camera.lookAt(scene.position);
     }
     else if (camera3) {
         if (initialBalls < nBalls) {
             var b = balls[nBalls - 1];
             var d = new THREE.Vector3();
-            d.setComponent(0, -b.obj.position.getComponent(0) - b.speed.getComponent(0));
-            d.setComponent(2, -b.obj.position.getComponent(2) - b.speed.getComponent(2));
-            d.setLength(ballDistance);
-            d.setComponent(1, ballDistance + ballRadius);
-    
-            camera.position.x = d.getComponent(0);
-            camera.position.y = d.getComponent(1);
-            camera.position.z = d.getComponent(2);
+            // d.setComponent(0, -b.obj.position.getComponent(0) - b.speed.getComponent(0));
+            // d.setComponent(2, -b.obj.position.getComponent(2) - b.speed.getComponent(2));
+            // d.setLength(ballDistance);
+            // d.setComponent(1, ballDistance + ballRadius);
+            perspectiveCamera3.position.x = b.obj.position.getComponent(0) + camPos.getComponent(0);
+            perspectiveCamera3.position.y = b.obj.position.getComponent(1) + camPos.getComponent(1);
+            perspectiveCamera3.position.z = b.obj.position.getComponent(2) + camPos.getComponent(2);
+            camera = perspectiveCamera3;
             camera.lookAt(b.obj.position);
         }
     }
