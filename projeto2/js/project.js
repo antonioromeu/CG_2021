@@ -1,7 +1,7 @@
 var camera, orthographicCamera, perspectiveCamera, scene, renderer;
 var scale = 3;
 var clock;
-var near = 1, far = 1000 * scale;
+var near = -10000, far = 10000 * scale;
 var camera1, camera2, camera3;
 var ballRadius = 5 * scale;
 var stickLength = 80 * scale;
@@ -13,7 +13,8 @@ var minDistance = 1;
 var holes = [];
 var balls = [];
 var sticks = [];
-var nBalls = 16;
+var initialBalls = 16;
+var nBalls = initialBalls;
 var nSticks = 6;
 var pink = new THREE.Color(0xb57aae);
 var blue = new THREE.Color(0x55647e);
@@ -23,7 +24,7 @@ var brown = new THREE.Color(0x8e8270);
 var white = new THREE.Color(0xffffff);
 var holeMaterial = new THREE.MeshBasicMaterial({ color: ambar, wireframe: false });
 var whiteBallMaterial = new THREE.MeshBasicMaterial({ color: white, wireframe: false });
-var ballMaterial = new THREE.MeshBasicMaterial({ color: pink, wireframe: true });
+var ballMaterial = new THREE.MeshBasicMaterial({ color: pink, wireframe: false });
 var stickMaterial = new THREE.MeshBasicMaterial({ color: blue, wireframe: false });
 var highlightMaterial = new THREE.MeshBasicMaterial({ color: pink, wireframe: false });
 var planeMaterial = new THREE.MeshBasicMaterial({ color: blue, wireframe: false });
@@ -33,6 +34,7 @@ var sticksMat = [stickMaterial, stickMaterial, stickMaterial, stickMaterial, sti
 var leftArrow = false;
 var rightArrow = false;
 var spaceKey = false;
+var ballDistance = ballRadius * 4;
 
 function getRandomArbitrary(min, max) {
     return Math.random() * (max - min) + min;
@@ -41,7 +43,7 @@ function getRandomArbitrary(min, max) {
 class Ball {
     constructor(x, y, z, material) {
         this.speed = new THREE.Vector3(getRandomArbitrary(minSpeed, maxSpeed), 0, getRandomArbitrary(minSpeed, maxSpeed));
-        var sphere = new THREE.SphereGeometry(ballRadius, 8, 8);
+        var sphere = new THREE.SphereGeometry(ballRadius, 16, 16);
         var mesh = new THREE.Mesh(sphere, material);
         var ball = new THREE.Object3D().add(mesh);
         ball.add(new THREE.AxisHelper(2 * ballRadius));
@@ -159,6 +161,7 @@ class Ball {
         this.speed.copy(this.nextSpeed);
         this.obj.position.set(this.nextPos.getComponent(0), this.nextPos.getComponent(1), this.nextPos.getComponent(2));
         this.computePosition(delta);
+        
 
     }
 
@@ -364,9 +367,6 @@ function createCamera() {
     orthographicCamera.position.y = 200 * scale;
     orthographicCamera.position.z = 0;
     perspectiveCamera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, near, far);
-    perspectiveCamera.position.x = 150 * scale;
-    perspectiveCamera.position.y = 150 * scale;
-    perspectiveCamera.position.z = 150 * scale;
     camera = orthographicCamera;
     camera.lookAt(scene.position);
 }
@@ -406,6 +406,7 @@ function render() {
                 balls.push(ball);
                 nBalls += 1;
                 scene.add(ball.obj);
+
                 sticks[i].obj.remove(sticks[i].whiteBall.obj);
                 sticks[i].select = false;
             }
@@ -415,6 +416,21 @@ function render() {
             sticks[i].obj.remove(sticks[i].whiteBall.obj);
         }
         sticks[i].rotateStick();
+    }
+
+    if (camera3 && initialBalls < nBalls) {
+        var b = balls[nBalls - 1];
+        var d = new THREE.Vector3();
+        // d = b.speed;
+        d.setComponent(0, -b.obj.position.getComponent(0) - b.speed.getComponent(0));
+        d.setComponent(2, -b.obj.position.getComponent(2) - b.speed.getComponent(2));
+        d.setLength(ballDistance);
+        d.setComponent(1, ballDistance + ballRadius );
+
+        camera.position.x = d.getComponent(0);
+        camera.position.y = d.getComponent(1);
+        camera.position.z = d.getComponent(2);
+        camera.lookAt(b.obj.position);
     }
 }
 
@@ -448,14 +464,20 @@ function onKeyDown(e) {
         case 49: // 1 frontal view
         case 97: // 1 frontal view
             camera1 = true;
+            camera2 = false;
+            camera3 = false;
             break;
         case 50: // 2 top view
         case 98: // 2 top view
             camera2 = true;
+            camera1 = false;
+            camera3 = false;
             break;
         case 51: // 3 side view
         case 99: // 3 side view
             camera3 = true;
+            camera1 = false;
+            camera2 = false;
             break;
         case 52: // 4 select stick
         case 100: // 4 select stick
@@ -513,18 +535,6 @@ function onKeyUp(e) {
         case 39: // right arrow
             rightArrow = false;
             break;
-        case 49: // 1 frontal view
-        case 97: // 1 frontal view
-            camera1 = false;
-            break;
-        case 50: // 2 top view
-        case 98: // 2 top view
-            camera2 = false;
-            break;
-        case 51: // 3 side view
-        case 99: // 3 side view
-            camera3 = false;
-            break;
     }
 }
 
@@ -535,19 +545,33 @@ function animate() {
         orthographicCamera.position.y = 400 * scale;
         orthographicCamera.position.z = 0;
         camera = orthographicCamera;
+        camera.lookAt(scene.position);
     }
 
-    else if (camera2)
+    else if (camera2) {
         camera = perspectiveCamera;
-
+        camera.position.x = 150 * scale;
+        camera.position.y = 150 * scale;
+        camera.position.z = 150 * scale;
+        camera.lookAt(scene.position);
+    }
     else if (camera3) {
-        orthographicCamera.position.x = 400 * scale;
-        orthographicCamera.position.y = 0;
-        orthographicCamera.position.z = 0;
-        camera = orthographicCamera;
+        if (initialBalls < nBalls) {
+            var b = balls[nBalls - 1];
+            var d = new THREE.Vector3();
+            d.setComponent(0, -b.obj.position.getComponent(0) - b.speed.getComponent(0));
+            d.setComponent(2, -b.obj.position.getComponent(2) - b.speed.getComponent(2));
+            d.setLength(ballDistance);
+            d.setComponent(1, ballDistance + ballRadius);
+    
+            camera.position.x = d.getComponent(0);
+            camera.position.y = d.getComponent(1);
+            camera.position.z = d.getComponent(2);
+            camera.lookAt(b.obj.position);
+        }
     }
 
-    camera.lookAt(scene.position);
+
     render();
     requestAnimationFrame(animate);
 }
