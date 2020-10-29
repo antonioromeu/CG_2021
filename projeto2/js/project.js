@@ -14,10 +14,9 @@ var holes = [];
 var balls = [];
 var sticks = [];
 var nBalls = 16;
-var newNrBalls = 16;
 var nSticks = 6;
 var pink = new THREE.Color(0xb57aae);
-var blue = new THREE.Color(0x55647e );
+var blue = new THREE.Color(0x55647e);
 var green = new THREE.Color(0x64b1a4);
 var ambar = new THREE.Color(0xcbbba1);
 var brown = new THREE.Color(0x8e8270);
@@ -40,21 +39,17 @@ function getRandomArbitrary(min, max) {
 }
 
 class Ball {
-    constructor() {
-        var z = getRandomArbitrary(-tableWidth/2 + ballRadius, tableWidth/2 - ballRadius);
-        var x = getRandomArbitrary(-tableDepth/2 + ballRadius, tableDepth/2 - ballRadius);
-        var y = ballRadius;
+    constructor(x, y, z, material) {
         this.speed = new THREE.Vector3(getRandomArbitrary(minSpeed, maxSpeed), 0, getRandomArbitrary(minSpeed, maxSpeed));
         var sphere = new THREE.SphereGeometry(ballRadius, 8, 8);
-        var mesh = new THREE.Mesh(sphere, ballMaterial);
+        var mesh = new THREE.Mesh(sphere, material);
         var ball = new THREE.Object3D().add(mesh);
         ball.add(new THREE.AxisHelper(2 * ballRadius));
         ball.position.set(x, y, z);
-
-
         var vec = new THREE.Vector3(1, 0, 0);
         this.angle = vec.angleTo(this.speed);
-        if (this.speed.getComponent(2) > 0) this.angle = -this.angle;
+        if (this.speed.getComponent(2) > 0)
+            this.angle = -this.angle;
         ball.rotateY(this.angle);
 
         this.obj = ball;
@@ -64,15 +59,15 @@ class Ball {
         this.nextSpeed.copy(this.speed);
         this.falling = false;
 
+        this.d = 0;
+
     }
 
     computePosition(delta) {
-        if (!this.falling) {  
+        if (!this.falling)
             this.nextSpeed.multiplyScalar(1 - delta);
-        }
-        else {
+        else
             this.nextSpeed.multiplyScalar((1 + delta) * scale);
-        }
         this.nextPos.add(this.nextSpeed);
     }
 
@@ -101,7 +96,8 @@ class Ball {
     }
 
     intersectsBall(ball) {
-        if (ball.falling) return false;
+        if (ball.falling)
+            return false;
         var x = this.nextPos.getComponent(0);
         var z = this.nextPos.getComponent(2);
         var distance = Math.sqrt((x - ball.nextPos.getComponent(0)) * (x - ball.nextPos.getComponent(0)) +
@@ -145,6 +141,9 @@ class Ball {
     }
 
     update(delta) {
+
+        this.obj.rotateZ(-this.d * 1.5);
+        
         this.obj.rotateY(-this.angle);
         var vec = new THREE.Vector3(1, 0, 0);
         this.angle = vec.angleTo(this.nextSpeed);
@@ -153,13 +152,9 @@ class Ball {
         
         var dx = this.nextPos.getComponent(0) - this.obj.position.getComponent(0);
         var dz = this.nextPos.getComponent(2) - this.obj.position.getComponent(2);
-        var d = Math.sqrt((dx * dx) + (dz * dz));
+        this.d = Math.sqrt((dx * dx) + (dz * dz));
 
-        // console.log(this.obj.rotation.z);
-        // this.obj.rotation.z -= d / ballRadius;
-        // var axis = new THREE.Vector3(0, 0, dz);
-        // this.obj.rotateOnAxis(axis, d / ballRadius);
-        // this.obj.rotateZ(-d / ballRadius);
+        this.obj.rotateZ(this.d * 1.5);
  
         this.speed.copy(this.nextSpeed);
         this.obj.position.set(this.nextPos.getComponent(0), this.nextPos.getComponent(1), this.nextPos.getComponent(2));
@@ -186,22 +181,6 @@ class Ball {
         // }
     }
 }
-
-// class WhiteBall extends Ball {
-//     constructor() {
-//         super();
-//         this.speed = new THREE.Vector3();
-//         this.nextSpeed = new THREE.Vector3();
-//         this.angle = 0;
-//         this.nextPos = new THREE.Vector3();
-//         var sphere = new THREE.SphereGeometry(ballRadius, 32, 32);
-//         var mesh = new THREE.Mesh(sphere, whiteBallMaterial);
-//         this.obj = new THREE.Object3D().add(mesh);
-//         this.obj.position.set(0, 4 * ballRadius, 0);
-//     }
-
-//     // update(delta) { super.update(delta); }
-// }
 
 class Table {
     constructor() {
@@ -277,39 +256,51 @@ class Stick {
         var stick = new THREE.CylinderGeometry(stickSmallRadius, stickBigRadius, stickLength, 6);
         this.mesh = new  THREE.Mesh(stick, new THREE.MeshBasicMaterial({ color: blue, wireframe: false }));
         var obj = new THREE.Object3D().add(this.mesh);
-        obj.position.set(0, - stickLength / 2, 0);
+        obj.position.set(0, - stickLength / 2 - (2 * ballRadius), 0);
         this.rotation = 0;
 
         this.whiteBall = new Ball(); 
-        this.whiteBall.speed = new THREE.Vector3();
-        this.whiteBall.nextSpeed = new THREE.Vector3();
+        this.whiteBall.speed.set(0, 0, 0);
+        this.whiteBall.nextSpeed.set(0, 0, 0);
         this.whiteBall.angle = 0;
-        this.whiteBall.nextPos = new THREE.Vector3();
+        this.whiteBall.nextPos.set(0, 0, 0);
+        this.whiteBall.obj.position.set(0, 0, 0);
+
         var sphere = new THREE.SphereGeometry(ballRadius, 32, 32);
         var mesh = new THREE.Mesh(sphere, whiteBallMaterial);
         this.whiteBall.obj = new THREE.Object3D().add(mesh);
-        this.whiteBall.obj.position.set(0, 4 * ballRadius, 0);
-
+        this.whiteBall.obj.position.set(0, 0, 0);
         this.obj = new THREE.Object3D().add(obj);
         this.obj.rotateZ(Math.PI/2);
         this.select = false;
+
+        this.ballPos = new THREE.Vector3(this.xPos, this.yPos, this.zPos);
+        this.ballSpeed = new THREE.Vector3();
         
         switch (direction) {
             case "down":
                 this.angle = -Math.PI/2;
+                this.ballPos.setComponent(2, this.zPos);
+                this.ballSpeed.set(0, 0, -maxSpeed);
                 break;
             case "up":
                 this.angle = Math.PI/2;
+                this.ballPos.setComponent(2, this.zPos);
+                this.ballSpeed.set(0, 0, maxSpeed);
+
                 break;
             case "right":
                 this.angle = 0;
+                this.ballPos.setComponent(0, this.xPos);
+                this.ballSpeed.set(-maxSpeed, 0, 0);
                 break;
             case "left":
                 this.angle = Math.PI;
+                this.ballPos.setComponent(0, this.xPos);
+                this.ballSpeed.set(maxSpeed, 0, 0); 
                 break;
         }
         
-        this.obj.add(new THREE.AxisHelper(2 * ballRadius));
         this.obj.rotateX(this.angle);
         this.obj.position.set(this.xPos, this.yPos, this.zPos);
     }
@@ -321,35 +312,23 @@ class Stick {
                 rotation = -rotation;
             if ((this.rotation <= Math.PI / 3 && rightArrow) || (this.rotation >= -Math.PI / 3 && leftArrow)) {
                 this.rotation += rotation;
-                this.obj.rotateOnAxis(new THREE.Vector3(1,0,0), rotation);
+                this.obj.rotateOnAxis(new THREE.Vector3(1, 0, 0), rotation);
+                // this.whiteBall.obj.rotateOnAxis(new THREE.Vector3(1, 0, 0), -rotation);
+                // var pos = new THREE.Vector3();
+                // pos = this.whiteBall.obj.position;
             }
         }
-    }
-
-    processWhiteBall() {
-        this.obj.add(this.whiteBall.obj);
-        if (spaceKey) {
-            var ball = new Ball();
-            ball = Object.assign({}, this.whiteBall);
-            balls.push(ball);
-            nBalls += 1;
-            console.log(nBalls);
-            
-            this.obj.remove(this.whiteBall.obj);
-            console.log(balls[nBalls-1].obj.position);
-        }
-
     }
 }
 
 function createTable() {
     var table = new Table();
-    var leftStick = new Stick(-tableDepth/2 - 5 * scale, 0, "left");
-    var rightStick = new Stick(tableDepth/2 + 5 * scale, 0, "right");
-    var topLeftStick = new Stick(-tableDepth/4, - tableWidth/2 - 5 * scale, "up");
-    var topRightStick = new Stick(tableDepth/4, - tableWidth/2 - 5 * scale, "up");
-    var bottomLeftStick = new Stick(-tableDepth/4, tableWidth/2 + 5 * scale, "down");
-    var bottomRightStick = new Stick(tableDepth/4, tableWidth/2 + 5 * scale, "down");
+    var leftStick = new Stick(-tableDepth/2 + ballRadius, 0, "left");
+    var rightStick = new Stick(tableDepth/2 - ballRadius, 0, "right");
+    var topLeftStick = new Stick(-tableDepth/4, - tableWidth/2 + ballRadius, "up");
+    var topRightStick = new Stick(tableDepth/4, - tableWidth/2 + ballRadius, "up");
+    var bottomLeftStick = new Stick(-tableDepth/4, tableWidth/2 - ballRadius, "down");
+    var bottomRightStick = new Stick(tableDepth/4, tableWidth/2 - ballRadius, "down");
     sticks.push(leftStick);
     sticks.push(rightStick);
     sticks.push(topLeftStick);
@@ -357,13 +336,15 @@ function createTable() {
     sticks.push(bottomLeftStick);
     sticks.push(bottomRightStick);
     for (var i = 0; i < nBalls; i++) {
-        var ball = new Ball();
+        var z = getRandomArbitrary(-tableWidth/2 + ballRadius, tableWidth/2 - ballRadius);
+        var x = getRandomArbitrary(-tableDepth/2 + ballRadius, tableDepth/2 - ballRadius);
+        var y = ballRadius; 
+        var ball = new Ball(x, y, z, ballMaterial);
         balls.push(ball);
         scene.add(balls[i].obj);
     }
-    for (var i = 0; i < sticks.length; i++) {
+    for (var i = 0; i < sticks.length; i++)
         scene.add(sticks[i].obj);
-    }
     scene.add(table.obj);
 }
 
@@ -385,7 +366,7 @@ function createCamera() {
     perspectiveCamera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, near, far);
     perspectiveCamera.position.x = 150 * scale;
     perspectiveCamera.position.y = 150 * scale;
-    perspectiveCamera.position.z = 150* scale;
+    perspectiveCamera.position.z = 150 * scale;
     camera = orthographicCamera;
     camera.lookAt(scene.position);
 }
@@ -401,22 +382,33 @@ function onResize() {
 
 function render() {
     'use strict';
-    console.log(nBalls);
     renderer.render(scene, camera);
     var delta = clock.getDelta();
-    for (var i = 0; i < nBalls; i++) {
-        // console.log(i);
+    for (var i = 0; i < nBalls; i++)
         balls[i].update(delta);
-    }
-    for (var i = 0; i < nBalls; i++) {
+    
+    for (var i = 0; i < nBalls; i++)
         if (!balls[i].falling)
             balls[i].checkCollisions(delta, i);
-    }
-    nBalls = newNrBalls;
+    
     for (var i = 0; i < nSticks; i++) {
         if (sticks[i].select) {
             sticks[i].mesh.material.setValues(highlightMaterial);
-            sticks[i].processWhiteBall();
+            sticks[i].obj.add(sticks[i].whiteBall.obj);
+            if (spaceKey) {
+                var ball = new Ball(sticks[i].ballPos.getComponent(0), sticks[i].ballPos.getComponent(1), sticks[i].ballPos.getComponent(2), whiteBallMaterial);
+                
+                var speed = sticks[i].ballSpeed.applyAxisAngle(new THREE.Vector3(0, 1, 0), sticks[i].rotation);
+                
+                ball.speed.set(speed.getComponent(0), speed.getComponent(1), speed.getComponent(2));
+                ball.nextSpeed.set(speed.getComponent(0), speed.getComponent(1), speed.getComponent(2));
+
+                balls.push(ball);
+                nBalls += 1;
+                scene.add(ball.obj);
+                sticks[i].obj.remove(sticks[i].whiteBall.obj);
+                sticks[i].select = false;
+            }
         }
         else {
             sticks[i].mesh.material.setValues(stickMaterial);
@@ -424,8 +416,6 @@ function render() {
         }
         sticks[i].rotateStick();
     }
-
-
 }
 
 function init() {
@@ -540,19 +530,6 @@ function onKeyUp(e) {
 
 function animate() {
     'use strict';
-    /*
-    if (leftArrow)
-        g0.position.x--;
-
-    if (topArrow)
-        g0.position.z++;
-
-    if (rightArrow)
-        g0.position.x++;
-
-    if (downArrow)
-        g0.position.z--;
-    */
     if (camera1) {
         orthographicCamera.position.x = 0;
         orthographicCamera.position.y = 400 * scale;
@@ -560,36 +537,16 @@ function animate() {
         camera = orthographicCamera;
     }
 
-    else if (camera2) {
-        // perspectiveCamera.position.x = 0;
-        // camera.position.y = 200;
-        // camera.position.z = 0;
+    else if (camera2)
         camera = perspectiveCamera;
-
-    }
 
     else if (camera3) {
         orthographicCamera.position.x = 400 * scale;
         orthographicCamera.position.y = 0;
         orthographicCamera.position.z = 0;
         camera = orthographicCamera;
-
     }
 
-    /*
-    if (rotate_v1_r)
-    g0.rotation.y -= .03;
-    if (rotate_v1_l)
-    g0.rotation.y += .03;
-    if (rotate_v2_r)
-    g2.rotation.x -= .03;
-    if (rotate_v2_l)
-    g2.rotation.x += .03;
-    if (rotate_v3_r)
-    g20.rotation.x -= .03;
-    if (rotate_v3_l)
-    g20.rotation.x += .03;
-    */
     camera.lookAt(scene.position);
     render();
     requestAnimationFrame(animate);
