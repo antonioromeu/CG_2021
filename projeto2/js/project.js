@@ -36,7 +36,6 @@ var rightArrow = false;
 var spaceKey = false;
 var ballDistance = ballRadius * 4;
 var camPos = new THREE.Vector3(0, 0, 0);
-//var camDir = new THREE.Vector3(0, 0, 0);
 
 function getRandomArbitrary(min, max) {
     return Math.random() * (max - min) + min;
@@ -164,23 +163,21 @@ class Ball {
         this.computePosition(delta);
     }
 
-    checkCollisions(delta, index) {
-        // if (!balls[index].falling) {
-            if (this.intersectsTable())
-                this.computeTableRicochet();
-            for (var i = index + 1; i < nBalls; i++) {
+    checkCollisions(index) {
+        if (this.intersectsTable())
+            this.computeTableRicochet();
+        for (var i = index + 1; i < nBalls; i++) {
 
-                for (var j = 0; j < 6; j++) {
-                    var distance = balls[i].intersectsHole(holes[j]);
-                    if (distance < ballRadius + scale) {
-                        balls[i].computeFall(holes[j], distance);
-                    }
-                }
-                if (this.intersectsBall(balls[i])) {
-                    this.computeBallRicochet(balls[i]);
+            for (var j = 0; j < 6; j++) {
+                var distance = balls[i].intersectsHole(holes[j]);
+                if (distance < ballRadius + scale) {
+                    balls[i].computeFall(holes[j], distance);
                 }
             }
-        // }
+            if (this.intersectsBall(balls[i])) {
+                this.computeBallRicochet(balls[i]);
+            }
+        }
     }
 }
 
@@ -314,9 +311,6 @@ class Stick {
             if ((this.rotation <= Math.PI / 3 && rightArrow) || (this.rotation >= -Math.PI / 3 && leftArrow)) {
                 this.rotation += rotation;
                 this.obj.rotateOnAxis(new THREE.Vector3(1, 0, 0), rotation);
-                // this.whiteBall.obj.rotateOnAxis(new THREE.Vector3(1, 0, 0), -rotation);
-                // var pos = new THREE.Vector3();
-                // pos = this.whiteBall.obj.position;
             }
         }
     }
@@ -392,7 +386,7 @@ function render() {
     
     for (var i = 0; i < nBalls; i++)
         if (!balls[i].falling)
-            balls[i].checkCollisions(delta, i);
+            balls[i].checkCollisions(i);
     
     for (var i = 0; i < nSticks; i++) {
         if (sticks[i].select) {
@@ -413,7 +407,7 @@ function render() {
                 sticks[i].obj.remove(sticks[i].whiteBall.obj);
                 sticks[i].select = false;
 
-                camPos.set(-speed.getComponent(0), speed.getComponent(1) + (2*ballRadius), -speed.getComponent(2));
+                camPos.set(-speed.getComponent(0), (4*ballRadius), -speed.getComponent(2));
                 camPos.setLength(scale * 100);
             }
         }
@@ -426,8 +420,6 @@ function render() {
 
     if (camera3 && initialBalls < nBalls) {
         var b = balls[nBalls - 1];
-        // var d = new THREE.Vector3();
-
         perspectiveCamera3.position.x = b.obj.position.getComponent(0) + camPos.getComponent(0);
         perspectiveCamera3.position.y = b.obj.position.getComponent(1) + camPos.getComponent(1);
         perspectiveCamera3.position.z = b.obj.position.getComponent(2) + camPos.getComponent(2);
@@ -560,11 +552,6 @@ function animate() {
     else if (camera3) {
         if (initialBalls < nBalls) {
             var b = balls[nBalls - 1];
-            var d = new THREE.Vector3();
-            // d.setComponent(0, -b.obj.position.getComponent(0) - b.speed.getComponent(0));
-            // d.setComponent(2, -b.obj.position.getComponent(2) - b.speed.getComponent(2));
-            // d.setLength(ballDistance);
-            // d.setComponent(1, ballDistance + ballRadius);
             perspectiveCamera3.position.x = b.obj.position.getComponent(0) + camPos.getComponent(0);
             perspectiveCamera3.position.y = b.obj.position.getComponent(1) + camPos.getComponent(1);
             perspectiveCamera3.position.z = b.obj.position.getComponent(2) + camPos.getComponent(2);
