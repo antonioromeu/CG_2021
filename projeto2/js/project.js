@@ -413,8 +413,8 @@ function render() {
                 sticks[i].obj.remove(sticks[i].whiteBall.obj);
                 sticks[i].select = false;
 
-                camPos = (-speed.getComponent(0), speed.getComponent(1) + (2*ballRadius), speed.getComponent(2));
-                // camPos.setLength()
+                camPos.set(-speed.getComponent(0), speed.getComponent(1) + (2*ballRadius), -speed.getComponent(2));
+                camPos.setLength(scale * 100);
             }
         }
         else {
