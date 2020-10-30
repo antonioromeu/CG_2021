@@ -36,6 +36,7 @@ var rightArrow = false;
 var spaceKey = false;
 var ballDistance = ballRadius * 4;
 var camPos = new THREE.Vector3(0, 0, 0);
+var wallThickness = ballRadius / 2;
 
 function getRandomArbitrary(min, max) {
     return Math.random() * (max - min) + min;
@@ -185,8 +186,8 @@ class Table {
     constructor() {
         var tableHeight = ballRadius * 3;
         var basePlane = new THREE.PlaneGeometry(tableWidth, tableDepth, 10);
-        var longWallPlane = new THREE.PlaneGeometry(tableDepth, tableHeight, 10, 10);
-        var smallWallPlan = new THREE.PlaneGeometry(tableWidth, tableHeight, 10, 10);
+        var longWallPlane = new THREE.BoxGeometry(tableDepth + (2 * wallThickness), tableHeight, wallThickness);
+        var smallWallPlan = new THREE.BoxGeometry(tableWidth + (2 * wallThickness), tableHeight, wallThickness);
         var circle = new THREE.CircleGeometry(ballRadius + scale, 32);
         var base = new THREE.Mesh(basePlane, baseMaterial);
         var leftWall = new THREE.Mesh(longWallPlane, wallMaterial);
@@ -203,10 +204,10 @@ class Table {
         base.rotateZ(Math.PI/2);
         base.rotateY(Math.PI/2);
         table.add(base);
-        leftWall.position.set(0, tableHeight/2, tableWidth/2);
-        rightWall.position.set(0, tableHeight/2, -tableWidth/2);
-        topWall.position.set(-tableDepth/2, tableHeight/2, 0);
-        bottomWall.position.set(tableDepth/2, tableHeight/2, 0);
+        leftWall.position.set(0, tableHeight/2, tableWidth/2 + (wallThickness / 2));
+        rightWall.position.set(0, tableHeight/2, -tableWidth/2 - (wallThickness / 2));
+        topWall.position.set(-tableDepth/2 - (wallThickness / 2), tableHeight/2, 0);
+        bottomWall.position.set(tableDepth/2 + (wallThickness / 2), tableHeight/2, 0);
         topWall.rotateY(Math.PI/2);
         bottomWall.rotateY(Math.PI/2);
         hole1.position.set(-tableDepth/2 + ballRadius + scale, 0.1, -tableWidth/2 + ballRadius + scale);
@@ -311,6 +312,7 @@ class Stick {
             if ((this.rotation <= Math.PI / 3 && rightArrow) || (this.rotation >= -Math.PI / 3 && leftArrow)) {
                 this.rotation += rotation;
                 this.obj.rotateOnAxis(new THREE.Vector3(1, 0, 0), rotation);
+                console.log(rotation);
             }
         }
     }
@@ -359,11 +361,7 @@ function createCamera() {
     orthographicCamera.position.y = 200 * scale;
     orthographicCamera.position.z = 0;
     perspectiveCamera2 = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, near, far);
-    perspectiveCamera2.position.x = 150 * scale;
-    perspectiveCamera2.position.y = 150 * scale;
-    perspectiveCamera2.position.z = 150 * scale;
-    perspectiveCamera3 = new THREE.PerspectiveCamera();
-    perspectiveCamera3 = perspectiveCamera2;
+    perspectiveCamera3 = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, near, far);
     camera = orthographicCamera;
     camera.lookAt(scene.position);
 }
@@ -394,12 +392,11 @@ function render() {
             sticks[i].obj.add(sticks[i].whiteBall.obj);
             if (spaceKey) {
                 var ball = new Ball(sticks[i].ballPos.getComponent(0), sticks[i].ballPos.getComponent(1), sticks[i].ballPos.getComponent(2), whiteBallMaterial);
-                
-                var speed = sticks[i].ballSpeed.applyAxisAngle(new THREE.Vector3(0, 1, 0), sticks[i].rotation);
-                
+                var speed = new THREE.Vector3(0, 0, 0);
+                speed.copy(sticks[i].ballSpeed);
+                speed.applyAxisAngle(new THREE.Vector3(0, 1, 0), sticks[i].rotation);
                 ball.speed.set(speed.getComponent(0), speed.getComponent(1), speed.getComponent(2));
                 ball.nextSpeed.set(speed.getComponent(0), speed.getComponent(1), speed.getComponent(2));
-
                 balls.push(ball);
                 nBalls += 1;
                 scene.add(ball.obj);
@@ -407,8 +404,8 @@ function render() {
                 sticks[i].obj.remove(sticks[i].whiteBall.obj);
                 sticks[i].select = false;
 
-                camPos.set(-speed.getComponent(0), (4*ballRadius), -speed.getComponent(2));
-                camPos.setLength(scale * 100);
+                camPos.set(-speed.getComponent(0), (4 * ballRadius), - speed.getComponent(2));
+                camPos.setLength(scale * 80);
             }
         }
         else {
