@@ -9,12 +9,37 @@ var green = new THREE.Color(0x64b1a4);
 var ambar = new THREE.Color(0xcbbba1);
 var brown = new THREE.Color(0x8e8270);
 var white = new THREE.Color(0xffffff);
-var palanque;
+var palanque, body, glass, light, cylinder, carpete, tire1, tire2, tire2, tire3, tire4;
+var floor;
 var palanqueHeight = 5 * scale;
 var directionalLight;
 var light1 = false, light2 = false, light3 = false;
 var obj, leftArrow = false, rightArrow = false;
-var qKey = true, eKey = false;
+var qKey = true, eKey = false, wKey = false;
+var phong = true, lambert = false, basic = false;
+
+var bodyPhong = new THREE.MeshPhongMaterial({color: pink, wireframe: false});
+var glassPhong = new THREE.MeshPhongMaterial({color: blue, wireframe: false});
+var lightPhong = new THREE.MeshPhongMaterial({color: white, wireframe: false});
+var tirePhong = new THREE.MeshPhongMaterial({color: green, wireframe: false});
+
+var bodyLambert = new THREE.MeshLambertMaterial({color: pink, wireframe: false});
+var glassLambert = new THREE.MeshLambertMaterial({color: blue, wireframe: false});
+var lightLambert = new THREE.MeshLambertMaterial({color: white, wireframe: false});
+var tireLambert = new THREE.MeshLambertMaterial({color: green, wireframe: false});
+
+var bodyBasic = new THREE.MeshBasicMaterial({color: pink, wireframe: false});
+var glassBasic = new THREE.MeshBasicMaterial({color: blue, wireframe: false});
+var lightBasic = new THREE.MeshBasicMaterial({color: white, wireframe: false});
+var tireBasic = new THREE.MeshBasicMaterial({color: green, wireframe: false});
+
+var bodyMaterial = [bodyPhong, bodyLambert, bodyBasic];
+var glassMaterial = [glassPhong, glassLambert, glassBasic];
+var lightMaterial = [lightPhong, lightLambert, lightBasic];
+var tireMaterial = [tirePhong, tireLambert, tireBasic];
+
+// var lightMaterial = new THREE.MeshPhongMaterial({color: white, wireframe: false});
+// var tireMaterial = new THREE.MeshPhongMaterial({color: green, wireframe: false});
 
 function createCybertruck() {
     let toVectors = a => new THREE.Vector3(a[0] * scale, a[1] * scale, a[2] * scale);
@@ -71,25 +96,24 @@ function createCybertruck() {
         [-16, 3, -6],
         [-18, 4, -6],
         [-18, 9, -6],
-        [-4, 16, -6], 
+        [-4, 16, -6],
         [18, 12, -6], // 40
         [17, 6, -6],
         [15, 3, -6],
 
-
         // top glass
-        [-15, 10.5, -5], 
+        [-15, 10.5, -5],
         [-4, 16, -5],
         [7, 14, -5], //45
         [-15, 10.5, 5],
-        [-4, 16, 5], 
+        [-4, 16, 5],
         [7, 14, 5],
 
         // front
         [-18, 8, 6],
         [-18, 8, -6], //50
 
-        //back 
+        //back
         [18 - 1/6, 11, 6],
         [18 - 1/6, 11, -6],
 
@@ -104,14 +128,14 @@ function createCybertruck() {
         [17, 4, 3],
         [19, 17, 3],
         [19, 3, 8],
-        [8, 3, 2], 
+        [8, 3, 2],
         [8, 2, 7],
         [7, 2, 1],
-        [7, 1, 6], 
+        [7, 1, 6],
         [19, 8, 9],
         [19, 9, 10],
         [20, 19, 10],
-        [21, 20, 10], 
+        [21, 20, 10],
         [17, 11, 18],
         [18, 11, 12],
         [17, 14, 11],
@@ -119,7 +143,6 @@ function createCybertruck() {
         [19, 13, 14],
         [19, 12, 13],
         [18, 12, 19],
-        
 
         //left side
         [26, 36, 37],
@@ -128,14 +151,14 @@ function createCybertruck() {
         [38, 24, 25],
         [40, 24, 38],
         [40, 29, 24],
-        [29, 23, 24], 
+        [29, 23, 24],
         [29, 28, 23],
         [28, 22, 23],
-        [28, 27, 22], 
+        [28, 27, 22],
         [40, 30, 29],
         [40, 31, 30],
         [41, 31, 40],
-        [42, 31, 41], 
+        [42, 31, 41],
         [38, 39, 32],
         [39, 33, 32],
         [38, 32, 35],
@@ -143,10 +166,10 @@ function createCybertruck() {
         [40, 35, 34],
         [40, 34, 33],
         [39, 40, 33],
-        
+
 
         //top front glass
-        [43, 44, 46], 
+        [43, 44, 46],
         [44, 46, 47],
 
         //top back glass
@@ -158,7 +181,7 @@ function createCybertruck() {
         [37, 16, 15],
         [49, 37, 16],
         [37, 49, 50],
-        [43, 38, 17], 
+        [43, 38, 17],
         [46, 43, 17],
         [17, 18, 46],
         [46, 18, 47],
@@ -180,7 +203,6 @@ function createCybertruck() {
         //chassis
         [15, 21, 42],
         [15, 42, 36],
-
     ];
 
     var glassArray = [
@@ -190,9 +212,8 @@ function createCybertruck() {
         [34, 32, 33],
         [44, 47, 48],
         [48, 45, 44],
-        [46, 44, 43], 
+        [46, 44, 43],
         [44, 46, 47],
-
     ];
 
     var lightArray = [
@@ -207,13 +228,19 @@ function createCybertruck() {
     var lightFaces = lightArray.map(toFaces);
 
     var bodyGeometry = new THREE.Geometry();
-    var bodyMaterial = new THREE.MeshPhongMaterial({color: pink, wireframe: false})
+    // bodyGeometry.clearGroups();
+    // bodyGeometry.addGroup(0, bodyGeometry.index.count, 0);
+    // var bodyMaterial = new THREE.MeshPhongMaterial({color: pink, wireframe: false})
 
     var glassGeometry = new THREE.Geometry();
-    var glassMaterial = new THREE.MeshPhongMaterial({color: blue, wireframe: false})
+    // glassGeometry.clearGroups();
+    // glassGeometry.addGroup(0, glassGeometry.index.count, 0);
+    // var glassMaterial = new THREE.MeshPhongMaterial({color: blue, wireframe: false})
 
     var lightGeometry = new THREE.Geometry();
-    var lightMaterial = new THREE.MeshPhongMaterial({color: white, wireframe: false})
+    // lightGeometry.clearGroups();
+    // lightGeometry.addGroup(0, lightGeometry.index.count, 0);
+    // var lightMaterial = new THREE.MeshPhongMaterial({color: white, wireframe: false})
 
     bodyGeometry.vertices = bodyVertices;
     bodyGeometry.faces = bodyFaces;
@@ -225,22 +252,23 @@ function createCybertruck() {
     lightGeometry.faces = lightFaces;
     lightGeometry.computeFaceNormals();
 
-    var body = new THREE.Mesh(bodyGeometry, bodyMaterial);
-    var glass = new THREE.Mesh(glassGeometry, glassMaterial);
-    var light = new THREE.Mesh(lightGeometry, lightMaterial);
+    body = new THREE.Mesh(bodyGeometry, bodyMaterial[0]);
+    glass = new THREE.Mesh(glassGeometry, glassMaterial[0]);
+    light = new THREE.Mesh(lightGeometry, lightMaterial[0]);
 
-    obj = new THREE.Object3D();
+    var obj = new THREE.Object3D();
+
     obj.add(body);
     obj.add(glass);
     obj.add(light);
 
     var r = 3.4 * scale;
     var tireGeometry = new THREE.CylinderGeometry(r, r, 3 * scale, 32);
-    var tireMaterial = new THREE.MeshPhongMaterial({color: green, wireframe: false})
-    var tire1 = new THREE.Mesh(tireGeometry, tireMaterial);
-    var tire2 = new THREE.Mesh(tireGeometry, tireMaterial);
-    var tire3 = new THREE.Mesh(tireGeometry, tireMaterial);
-    var tire4 = new THREE.Mesh(tireGeometry, tireMaterial);
+    // var tireMaterial = new THREE.MeshPhongMaterial({color: green, wireframe: false})
+    tire1 = new THREE.Mesh(tireGeometry, tireMaterial[0]);
+    tire2 = new THREE.Mesh(tireGeometry, tireMaterial[0]);
+    tire3 = new THREE.Mesh(tireGeometry, tireMaterial[0]);
+    tire4 = new THREE.Mesh(tireGeometry, tireMaterial[0]);
     tire1.rotateX(Math.PI/2);
     tire2.rotateX(Math.PI/2);
     tire3.rotateX(Math.PI/2);
@@ -249,6 +277,13 @@ function createCybertruck() {
     tire2.position.set(-12 * scale, r, 4.5 * scale);
     tire3.position.set(11 * scale, r, -4.5 * scale);
     tire4.position.set(-12 * scale, r, -4.5 * scale);
+
+    // tireObj = new THREE.Object3D();
+    // tireObj.add(tire1);
+    // tireObj.add(tire2);
+    // tireObj.add(tire3);
+    // tireObj.add(tire4);
+
     obj.add(tire1);
     obj.add(tire2);
     obj.add(tire3);
@@ -262,12 +297,12 @@ function getRandomArbitrary(min, max) {
 }
 
 function createPalanque() {
-    var material = new THREE.MeshPhongMaterial({ color: blue, wireframe: false });
-    var cylinder = new THREE.CylinderGeometry(20 * scale, 20 * scale, palanqueHeight, 64);
-    var mesh = new THREE.Mesh(cylinder, material);
-    mesh.position.set(0, -palanqueHeight/2, 0);
-    palanque = new THREE.Object3D().add(mesh);
-    return palanque;
+    // var material = new THREE.MeshPhongMaterial({ color: blue, wireframe: false });
+    var c = new THREE.CylinderGeometry(20 * scale, 20 * scale, palanqueHeight, 64);
+    cylinder = new THREE.Mesh(c, glassMaterial[0]);
+    cylinder.position.set(0, -palanqueHeight/2, 0);
+    var obj = new THREE.Object3D().add(cylinder);
+    return obj;
 }
 
 function createScene() {
@@ -275,10 +310,10 @@ function createScene() {
     scene = new THREE.Scene();
     scene.background = ambar;
 
-    spotLight1 = createSpotLight(-21 * scale, 26 * scale, 14 * scale);
-    spotLight2 = createSpotLight(-10 * scale, 50 * scale, -10 * scale);
-    spotLight3 = createSpotLight(20 * scale, 40 * scale, -35 * scale);
-    createDirectional(50 * scale, 20 * scale, 50 * scale);  
+    spotLight1 = createSpotLight(-21 * scale, 23 * scale, 14 * scale);
+    spotLight2 = createSpotLight(-10 * scale, 26 * scale, -10 * scale);
+    spotLight3 = createSpotLight(14 * scale, 23 * scale, -21 * scale);
+    createDirectional(50 * scale, 20 * scale, 50 * scale);
 }
 
 function createCamera() {
@@ -297,13 +332,13 @@ function createCamera() {
 function createSpotLight(x, y, z) {
     var body = new THREE.Object3D();
     var materialb = new THREE.MeshPhongMaterial({color: 0x2884a6});
-    geometry = new THREE.SphereGeometry(5 * scale, 200 * scale, 200 * scale);
-    mesh = new THREE.Mesh(geometry, materialb);
+    var geometry = new THREE.SphereGeometry(5, 200, 200);
+    var mesh = new THREE.Mesh(geometry, materialb);
     body.add(mesh);
-    geometry = new THREE.ConeGeometry(6 * scale, 15 * scale, 200 * scale);
+    geometry = new THREE.ConeGeometry(6, 15, 200);
     mesh = new THREE.Mesh(geometry, materialb);
     mesh.rotateX(-Math.PI/2);
-    mesh.position.set(0 * scale, 0 * scale, 5 * scale);
+    mesh.position.set(0, 0, 5);
     body.add(mesh);
     body.position.set(x, y, z);
     body.lookAt(new THREE.Vector3(0, 0, 0));
@@ -331,9 +366,42 @@ function onResize() {
     }
 }
 
+function switchMaterial(i) {
+    body.material = bodyMaterial[i];
+    glass.material = glassMaterial[i];
+    cylinder.material = glassMaterial[i];
+    light.material = lightMaterial[i];
+    tire1.material = tireMaterial[i];
+    tire2.material = tireMaterial[i];
+    tire3.material = tireMaterial[i];
+    tire4.material = tireMaterial[i];
+    carpete.material = tireMaterial[i];
+}
+
 function render() {
     'use strict';
     renderer.render(scene, camera);
+    if (wKey) {
+        if (!basic)
+            switchMaterial(2);
+        else if (phong)
+            switchMaterial(0);
+        else if (lambert)
+            switchMaterial(1);
+        basic = !basic;
+        wKey = !wKey;
+    }
+    
+    if (eKey) {
+        phong = !phong;
+        lambert = !lambert;
+        if (phong && !wKey)
+            switchMaterial(0);
+        else if (lambert && !wKey)
+            switchMaterial(1);
+        eKey = !eKey;
+    }
+    
 }
 
 function init() {
@@ -343,16 +411,15 @@ function init() {
     document.body.appendChild(renderer.domElement);
     createScene();
     createCamera();
-    palanque = createPalanque();
+    palanque = new THREE.Object3D();
+    var cylinder = createPalanque();
     var cybertruck = createCybertruck();
+    palanque.add(cylinder);
     palanque.add(cybertruck);
     scene.add(palanque);
-    var carpeteGeometry = new THREE.PlaneGeometry(60 * scale, 60 * scale);
-    var carpeteMaterial = new THREE.MeshBasicMaterial( {color: green} );
-    var carpete = new THREE.Mesh(carpeteGeometry, carpeteMaterial);
+    var carpeteGeometry = new THREE.BoxGeometry(60 * scale, 1, 60 * scale, 60, 0, 60);
+    carpete = new THREE.Mesh(carpeteGeometry, tireMaterial[0]);
     carpete.position.set(0, -palanqueHeight, 0);
-    carpete.rotateZ(Math.PI/2);
-    carpete.rotateY(Math.PI/2);
     scene.add(carpete);
     render();
     window.addEventListener("keydown", onKeyDown);
@@ -371,8 +438,12 @@ function onKeyDown(e) {
             break;
         case 69: // e
             eKey = !eKey;
+            break;
         case 81: // q
             qKey = !qKey;
+            break;
+        case 87: // w
+            wKey = !wKey;
             break;
         case 49: // light 1
             light1 = !light1;
@@ -423,8 +494,8 @@ function animate() {
         camera = orthographicCamera;
         camera.lookAt(scene.position);
     }
-    
-    /*------------Q/E Key----------*/
+
+    /*------------Q/W/E Key----------*/
     if (qKey) {
         scene.remove(directionalLight);
         scene.add(directionalLight);
@@ -451,6 +522,8 @@ function animate() {
     }
     else if (!light3)
         scene.remove(spotLight3);
+
+    /*------------Arrow keys----------*/
     if (leftArrow) {
         palanque.rotation.y -= 0.03;
     }
