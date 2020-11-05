@@ -275,7 +275,7 @@ function createScene() {
     scene = new THREE.Scene();
     scene.background = ambar;
 
-    spotLight1 = createSpotLight(-35 * scale, 40 * scale, 20 * scale);
+    spotLight1 = createSpotLight(-21 * scale, 26 * scale, 14 * scale);
     spotLight2 = createSpotLight(-10 * scale, 50 * scale, -10 * scale);
     spotLight3 = createSpotLight(20 * scale, 40 * scale, -35 * scale);
     createDirectional(50 * scale, 20 * scale, 50 * scale);  
@@ -383,11 +383,11 @@ function onKeyDown(e) {
         case 51: // light 3
             light3 = !light3;
             break;
-        case 52: 
+        case 52: // camera 1
             camera1 = true;
             camera2 = false;
             break;
-        case 53:
+        case 53: // camera 2
             camera2 = true;
             camera1 = false;
             break;
@@ -408,6 +408,7 @@ function onKeyUp(e) {
 
 function animate() {
     'use strict';
+    /*------------Cameras----------*/
     if (camera1) {
         perspectiveCamera.position.x = 50 * scale;
         perspectiveCamera.position.y = 50 * scale;
@@ -422,27 +423,34 @@ function animate() {
         camera = orthographicCamera;
         camera.lookAt(scene.position);
     }
+    
+    /*------------Q/E Key----------*/
     if (qKey) {
         scene.remove(directionalLight);
         scene.add(directionalLight);
     }
-    else if (!qKey) scene.remove(directionalLight);
+    else if (!qKey)
+        scene.remove(directionalLight);
+    
+    /*------------Lights----------*/
     if (light1) {
         scene.remove(spotLight1);
         scene.add(spotLight1);
     }
-    else if (!light1) scene.remove(spotLight1);
+    else if (!light1)
+        scene.remove(spotLight1);
     if (light2) {
         scene.remove(spotLight2);
         scene.add(spotLight2);
     }
-    else if (!light2) scene.remove(spotLight2);
+    else if (!light2)
+        scene.remove(spotLight2);
     if (light3) {
         scene.remove(spotLight3);
         scene.add(spotLight3);
     }
-    else if (!light3) scene.remove(spotLight3);
-    
+    else if (!light3)
+        scene.remove(spotLight3);
     if (leftArrow) {
         palanque.rotation.y -= 0.03;
     }
