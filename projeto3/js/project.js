@@ -1,5 +1,5 @@
 var camera, camera1, camera2, orthographicCamera, perspectiveCamera, scene, renderer;
-var scale = 1;
+var scale = 6;
 var near = 1;
 var far = 1000 * scale;
 var spotLight1, spotLight2, spotLight3;
@@ -10,13 +10,14 @@ var ambar = new THREE.Color(0xcbbba1);
 var brown = new THREE.Color(0x8e8270);
 var white = new THREE.Color(0xffffff);
 var palanque;
+var palanqueHeight = 5 * scale;
 var directionalLight;
 var light1 = false, light2 = false, light3 = false;
 var obj, leftArrow = false, rightArrow = false;
 var qKey = true, eKey = false;
 
 function createCybertruck() {
-    let toVectors = a => new THREE.Vector3(a[0], a[1], a[2]);
+    let toVectors = a => new THREE.Vector3(a[0] * scale, a[1] * scale, a[2] * scale);
     let toFaces = a => new THREE.Face3(a[0], a[1], a[2]);
 
     var verticesArray = [
@@ -214,7 +215,6 @@ function createCybertruck() {
     var lightGeometry = new THREE.Geometry();
     var lightMaterial = new THREE.MeshPhongMaterial({color: white, wireframe: false})
 
-
     bodyGeometry.vertices = bodyVertices;
     bodyGeometry.faces = bodyFaces;
     bodyGeometry.computeFaceNormals();
@@ -234,8 +234,8 @@ function createCybertruck() {
     obj.add(glass);
     obj.add(light);
 
-    var r = 3.4;
-    var tireGeometry = new THREE.CylinderGeometry(r, r, 3, 32);
+    var r = 3.4 * scale;
+    var tireGeometry = new THREE.CylinderGeometry(r, r, 3 * scale, 32);
     var tireMaterial = new THREE.MeshPhongMaterial({color: green, wireframe: false})
     var tire1 = new THREE.Mesh(tireGeometry, tireMaterial);
     var tire2 = new THREE.Mesh(tireGeometry, tireMaterial);
@@ -245,10 +245,10 @@ function createCybertruck() {
     tire2.rotateX(Math.PI/2);
     tire3.rotateX(Math.PI/2);
     tire4.rotateX(Math.PI/2);
-    tire1.position.set(11, r, 4.5);
-    tire2.position.set(-12, r, 4.5);
-    tire3.position.set(11, r, -4.5);
-    tire4.position.set(-12, r, -4.5);
+    tire1.position.set(11 * scale, r, 4.5 * scale);
+    tire2.position.set(-12 * scale, r, 4.5 * scale);
+    tire3.position.set(11 * scale, r, -4.5 * scale);
+    tire4.position.set(-12 * scale, r, -4.5 * scale);
     obj.add(tire1);
     obj.add(tire2);
     obj.add(tire3);
@@ -263,9 +263,9 @@ function getRandomArbitrary(min, max) {
 
 function createPalanque() {
     var material = new THREE.MeshPhongMaterial({ color: blue, wireframe: false });
-    var cylinder = new THREE.CylinderGeometry(20 * scale, 20 * scale, 5 * scale, 64);
+    var cylinder = new THREE.CylinderGeometry(20 * scale, 20 * scale, palanqueHeight, 64);
     var mesh = new THREE.Mesh(cylinder, material);
-    mesh.position.set(0, -5/2 * scale, 0);
+    mesh.position.set(0, -palanqueHeight/2, 0);
     palanque = new THREE.Object3D().add(mesh);
     return palanque;
 }
@@ -286,34 +286,32 @@ function createCamera() {
     var width = window.innerWidth;
     var height = window.innerHeight;
     perspectiveCamera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, near, far);
-    perspectiveCamera.position.x = -45 * scale;
+    perspectiveCamera.position.x = 50 * scale;
     perspectiveCamera.position.y = 50 * scale;
-    perspectiveCamera.position.z = 0 * scale;
+    perspectiveCamera.position.z = 50 * scale;
     camera = perspectiveCamera;
     orthographicCamera = new THREE.OrthographicCamera(width / - 2, width / 2, height / 2, height / - 2, near, far);
-    // orthographicCamera.position.x = 60 * scale;
-    // orthographicCamera.position.y = 0 * scale;
-    // orthographicCamera.position.z = 0 * scale;
-    // camera = orthographicCamera;
     camera.lookAt(scene.position);
 }
 
 function createSpotLight(x, y, z) {
     var body = new THREE.Object3D();
-    var materialb = new THREE.MeshPhongMaterial( {color: 0x2884a6} );
+    var materialb = new THREE.MeshPhongMaterial({color: 0x2884a6});
+    geometry = new THREE.SphereGeometry(5 * scale, 200 * scale, 200 * scale);
+    mesh = new THREE.Mesh(geometry, materialb);
+    body.add(mesh);
     geometry = new THREE.ConeGeometry(6 * scale, 15 * scale, 200 * scale);
     mesh = new THREE.Mesh(geometry, materialb);
-    mesh.rotateX(Math.PI/2);
+    mesh.rotateX(-Math.PI/2);
     mesh.position.set(0 * scale, 0 * scale, 5 * scale);
     body.add(mesh);
     body.position.set(x, y, z);
     body.lookAt(new THREE.Vector3(0, 0, 0));
 
-    var spotLight = new THREE.SpotLight(0xffffff, 0.7, 0, 1.2);
+    var spotLight = new THREE.SpotLight(0xffffff, 0.8, 0, 1.2);
     spotLight.position.set(x, y, z);
     spotLight.castShadow = false;
     spotLight.add(body);
-    // scene.add(spotLight);
     return spotLight;
 }
 
@@ -336,7 +334,6 @@ function onResize() {
 function render() {
     'use strict';
     renderer.render(scene, camera);
-    // var delta = clock.getDelta(); 
 }
 
 function init() {
@@ -350,10 +347,10 @@ function init() {
     var cybertruck = createCybertruck();
     palanque.add(cybertruck);
     scene.add(palanque);
-    var carpeteGeometry = new THREE.PlaneGeometry(60, 60);
+    var carpeteGeometry = new THREE.PlaneGeometry(60 * scale, 60 * scale);
     var carpeteMaterial = new THREE.MeshBasicMaterial( {color: green} );
     var carpete = new THREE.Mesh(carpeteGeometry, carpeteMaterial);
-    carpete.position.set(0, -5 * scale, 0);
+    carpete.position.set(0, -palanqueHeight, 0);
     carpete.rotateZ(Math.PI/2);
     carpete.rotateY(Math.PI/2);
     scene.add(carpete);
@@ -372,7 +369,7 @@ function onKeyDown(e) {
         case 39: // right arrow
             rightArrow = true;
             break;
-        case 69:
+        case 69: // e
             eKey = !eKey;
         case 81: // q
             qKey = !qKey;
@@ -412,16 +409,16 @@ function onKeyUp(e) {
 function animate() {
     'use strict';
     if (camera1) {
-        perspectiveCamera.position.x = 30 * scale;
-        perspectiveCamera.position.y = 30 * scale;
-        perspectiveCamera.position.z = 30 * scale;
+        perspectiveCamera.position.x = 50 * scale;
+        perspectiveCamera.position.y = 50 * scale;
+        perspectiveCamera.position.z = 50 * scale;
         camera = perspectiveCamera;
         camera.lookAt(scene.position);
     }
     else if (camera2) {
-        orthographicCamera.position.x = 40 * scale;
-        orthographicCamera.position.y = 40 * scale;
-        orthographicCamera.position.z = 40 * scale;
+        orthographicCamera.position.x = 0 * scale;
+        orthographicCamera.position.y = 0 * scale;
+        orthographicCamera.position.z = 100 * scale;
         camera = orthographicCamera;
         camera.lookAt(scene.position);
     }
