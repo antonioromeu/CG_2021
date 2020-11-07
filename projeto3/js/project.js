@@ -1,15 +1,24 @@
 var camera, camera1, camera2, orthographicCamera, perspectiveCamera, scene, renderer;
 var scale = 6;
 var near = 1;
+var clock;
 var far = 1000 * scale;
 var spotLight1, spotLight2, spotLight3;
+var slMeshes;
+
 var pink = new THREE.Color(0xb57aae);
 var blue = new THREE.Color(0x55647e);
 var green = new THREE.Color(0x64b1a4);
 var ambar = new THREE.Color(0xcbbba1);
 var brown = new THREE.Color(0x8e8270);
 var white = new THREE.Color(0xffffff);
-var palanque, body, glass, light, cylinder, carpete, tire1, tire2, tire2, tire3, tire4;
+var black = new THREE.Color(0x191919);
+var obsidian = new THREE.Color(0x0f1c29);
+var grey = new THREE.Color(0x666666);
+var copper = new THREE.Color(0x592a1d);
+var red = new THREE.Color(0xbf0000);
+
+var palanque, body, glass, backLight, frontLight,  cylinder, carpete, tire1, tire2, tire2, tire3, tire4;
 var floor;
 var palanqueHeight = 5 * scale;
 var directionalLight;
@@ -18,28 +27,34 @@ var obj, leftArrow = false, rightArrow = false;
 var qKey = true, eKey = false, wKey = false;
 var phong = true, lambert = false, basic = false;
 
-var bodyPhong = new THREE.MeshPhongMaterial({color: pink, wireframe: false});
-var glassPhong = new THREE.MeshPhongMaterial({color: blue, wireframe: false});
-var lightPhong = new THREE.MeshPhongMaterial({color: white, wireframe: false});
-var tirePhong = new THREE.MeshPhongMaterial({color: green, wireframe: false});
+var bodyPhong = new THREE.MeshPhongMaterial({color: grey, wireframe: false, shininess: 51.2, specular: grey});
+var glassPhong = new THREE.MeshPhongMaterial({color: obsidian, wireframe: false, shininess: 38.4, specular: obsidian});
+var backLightPhong = new THREE.MeshPhongMaterial({color: red, wireframe: false, shininess: 32, specular: white});
+var frontLightPhong = new THREE.MeshPhongMaterial({color: white, wireframe: false, shininess: 32, specular: white});
+var tirePhong = new THREE.MeshPhongMaterial({color: black, wireframe: false, shininess: 10, specular: black});
+var cylinderPhong = new THREE.MeshPhongMaterial({color: copper, wireframe: false, shininess: 12.8, specular: copper/*[0.39, 0.24, 0.086014, 1.0]*/});
 
-var bodyLambert = new THREE.MeshLambertMaterial({color: pink, wireframe: false});
-var glassLambert = new THREE.MeshLambertMaterial({color: blue, wireframe: false});
-var lightLambert = new THREE.MeshLambertMaterial({color: white, wireframe: false});
-var tireLambert = new THREE.MeshLambertMaterial({color: green, wireframe: false});
+var bodyLambert = new THREE.MeshLambertMaterial({color: grey, wireframe: false, shininess: 51.2, specular: 0.508273});
+var glassLambert = new THREE.MeshLambertMaterial({color: obsidian, wireframe: false, shininess: 38.4, specular: 0.332741});
+var backLightLambert = new THREE.MeshLambertMaterial({color: red, wireframe: false, shininess: 32, specular: 0.7});
+var frontLightLambert = new THREE.MeshLambertMaterial({color: white, wireframe: false, shininess: 32, specular: 0.7});
+var tireLambert = new THREE.MeshLambertMaterial({color: black, wireframe: false, shininess: 10, specular: 0.4});
+var cylinderLambert = new THREE.MeshLambertMaterial({color: copper, wireframe: false});
 
-var bodyBasic = new THREE.MeshBasicMaterial({color: pink, wireframe: false});
-var glassBasic = new THREE.MeshBasicMaterial({color: blue, wireframe: false});
-var lightBasic = new THREE.MeshBasicMaterial({color: white, wireframe: false});
-var tireBasic = new THREE.MeshBasicMaterial({color: green, wireframe: false});
+var bodyBasic = new THREE.MeshBasicMaterial({color: grey, wireframe: false});
+var glassBasic = new THREE.MeshBasicMaterial({color: obsidian, wireframe: false});
+var backLightBasic = new THREE.MeshBasicMaterial({color: red, wireframe: false});
+var frontLightBasic = new THREE.MeshBasicMaterial({color: white, wireframe: false});
+var tireBasic = new THREE.MeshBasicMaterial({color: black, wireframe: false});
+var cylinderBasic = new THREE.MeshBasicMaterial({color: copper, wireframe: false});
 
 var bodyMaterial = [bodyPhong, bodyLambert, bodyBasic];
 var glassMaterial = [glassPhong, glassLambert, glassBasic];
-var lightMaterial = [lightPhong, lightLambert, lightBasic];
+var frontLightMaterial = [frontLightPhong, frontLightLambert, frontLightBasic];
+var backLightMaterial = [backLightPhong, backLightLambert, backLightBasic];
 var tireMaterial = [tirePhong, tireLambert, tireBasic];
-
-// var lightMaterial = new THREE.MeshPhongMaterial({color: white, wireframe: false});
-// var tireMaterial = new THREE.MeshPhongMaterial({color: green, wireframe: false});
+var cylinderMaterial = [cylinderPhong, cylinderLambert, cylinderBasic];
+var spotlightMaterial = [bodyPhong, bodyLambert, bodyBasic];
 
 function createCybertruck() {
     let toVectors = a => new THREE.Vector3(a[0] * scale, a[1] * scale, a[2] * scale);
@@ -216,31 +231,25 @@ function createCybertruck() {
         [44, 46, 47],
     ];
 
-    var lightArray = [
+    var frontLightArray = [
         [50, 49, 38],
         [49, 17, 38],
+    ];
+
+    var backLightArray = [
         [51, 52, 40],
         [40, 19, 51],
     ];
 
     var bodyFaces = facesArray.map(toFaces);
     var glassFaces = glassArray.map(toFaces);
-    var lightFaces = lightArray.map(toFaces);
+    var frontLightFaces = frontLightArray.map(toFaces);
+    var backLightFaces = backLightArray.map(toFaces);
 
     var bodyGeometry = new THREE.Geometry();
-    // bodyGeometry.clearGroups();
-    // bodyGeometry.addGroup(0, bodyGeometry.index.count, 0);
-    // var bodyMaterial = new THREE.MeshPhongMaterial({color: pink, wireframe: false})
-
     var glassGeometry = new THREE.Geometry();
-    // glassGeometry.clearGroups();
-    // glassGeometry.addGroup(0, glassGeometry.index.count, 0);
-    // var glassMaterial = new THREE.MeshPhongMaterial({color: blue, wireframe: false})
-
-    var lightGeometry = new THREE.Geometry();
-    // lightGeometry.clearGroups();
-    // lightGeometry.addGroup(0, lightGeometry.index.count, 0);
-    // var lightMaterial = new THREE.MeshPhongMaterial({color: white, wireframe: false})
+    var frontLightGeometry = new THREE.Geometry();
+    var backLightGeometry = new THREE.Geometry();
 
     bodyGeometry.vertices = bodyVertices;
     bodyGeometry.faces = bodyFaces;
@@ -248,23 +257,27 @@ function createCybertruck() {
     glassGeometry.vertices = bodyVertices;
     glassGeometry.faces = glassFaces;
     glassGeometry.computeFaceNormals();
-    lightGeometry.vertices = bodyVertices;
-    lightGeometry.faces = lightFaces;
-    lightGeometry.computeFaceNormals();
+    frontLightGeometry.vertices = bodyVertices;
+    frontLightGeometry.faces = frontLightFaces;
+    frontLightGeometry.computeFaceNormals();
+    backLightGeometry.vertices = bodyVertices;
+    backLightGeometry.faces = backLightFaces;
+    backLightGeometry.computeFaceNormals();
 
     body = new THREE.Mesh(bodyGeometry, bodyMaterial[0]);
     glass = new THREE.Mesh(glassGeometry, glassMaterial[0]);
-    light = new THREE.Mesh(lightGeometry, lightMaterial[0]);
+    frontLight = new THREE.Mesh(frontLightGeometry, frontLightMaterial[0]);
+    backLight = new THREE.Mesh(backLightGeometry, backLightMaterial[0]);
 
     var obj = new THREE.Object3D();
 
     obj.add(body);
     obj.add(glass);
-    obj.add(light);
+    obj.add(frontLight);
+    obj.add(backLight);
 
     var r = 3.4 * scale;
     var tireGeometry = new THREE.CylinderGeometry(r, r, 3 * scale, 32);
-    // var tireMaterial = new THREE.MeshPhongMaterial({color: green, wireframe: false})
     tire1 = new THREE.Mesh(tireGeometry, tireMaterial[0]);
     tire2 = new THREE.Mesh(tireGeometry, tireMaterial[0]);
     tire3 = new THREE.Mesh(tireGeometry, tireMaterial[0]);
@@ -277,12 +290,6 @@ function createCybertruck() {
     tire2.position.set(-12 * scale, r, 4.5 * scale);
     tire3.position.set(11 * scale, r, -4.5 * scale);
     tire4.position.set(-12 * scale, r, -4.5 * scale);
-
-    // tireObj = new THREE.Object3D();
-    // tireObj.add(tire1);
-    // tireObj.add(tire2);
-    // tireObj.add(tire3);
-    // tireObj.add(tire4);
 
     obj.add(tire1);
     obj.add(tire2);
@@ -297,9 +304,8 @@ function getRandomArbitrary(min, max) {
 }
 
 function createPalanque() {
-    // var material = new THREE.MeshPhongMaterial({ color: blue, wireframe: false });
     var c = new THREE.CylinderGeometry(20 * scale, 20 * scale, palanqueHeight, 64);
-    cylinder = new THREE.Mesh(c, glassMaterial[0]);
+    cylinder = new THREE.Mesh(c, cylinderMaterial[0]);
     cylinder.position.set(0, -palanqueHeight/2, 0);
     var obj = new THREE.Object3D().add(cylinder);
     return obj;
@@ -308,11 +314,11 @@ function createPalanque() {
 function createScene() {
     'use strict';
     scene = new THREE.Scene();
-    scene.background = ambar;
+    scene.background = white;
 
-    spotLight1 = createSpotLight(-21 * scale, 23 * scale, 14 * scale);
-    spotLight2 = createSpotLight(-10 * scale, 26 * scale, -10 * scale);
-    spotLight3 = createSpotLight(14 * scale, 23 * scale, -21 * scale);
+    spotLight1 = createSpotLight(-21 * scale, 15 * scale, 14 * scale);
+    spotLight2 = createSpotLight(10 * scale, 15 * scale, 10 * scale);
+    spotLight3 = createSpotLight(14 * scale, 15 * scale, -21 * scale);
     createDirectional(50 * scale, 20 * scale, 50 * scale);
 }
 
@@ -321,9 +327,9 @@ function createCamera() {
     var width = window.innerWidth;
     var height = window.innerHeight;
     perspectiveCamera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, near, far);
-    perspectiveCamera.position.x = 50 * scale;
-    perspectiveCamera.position.y = 50 * scale;
-    perspectiveCamera.position.z = 50 * scale;
+    perspectiveCamera.position.x = 60 * scale;
+    perspectiveCamera.position.y = 60 * scale;
+    perspectiveCamera.position.z = 60 * scale;
     camera = perspectiveCamera;
     orthographicCamera = new THREE.OrthographicCamera(width / - 2, width / 2, height / 2, height / - 2, near, far);
     camera.lookAt(scene.position);
@@ -331,12 +337,11 @@ function createCamera() {
 
 function createSpotLight(x, y, z) {
     var body = new THREE.Object3D();
-    var materialb = new THREE.MeshPhongMaterial({color: 0x2884a6});
     var geometry = new THREE.SphereGeometry(5, 200, 200);
-    var mesh = new THREE.Mesh(geometry, materialb);
+    var mesh = new THREE.Mesh(geometry, spotlightMaterial);
     body.add(mesh);
     geometry = new THREE.ConeGeometry(6, 15, 200);
-    mesh = new THREE.Mesh(geometry, materialb);
+    mesh = new THREE.Mesh(geometry, spotlightMaterial);
     mesh.rotateX(-Math.PI/2);
     mesh.position.set(0, 0, 5);
     body.add(mesh);
@@ -358,28 +363,40 @@ function createDirectional(x, y, z) {
 
 function onResize() {
     'use strict';
+    camera.aspect = window.innerWidth / window.innerHeight;
+    window.resizeTo(window.innerWidth, window.innerHeight);
+
+    camera.left = -window.innerWidth / 2;
+    camera.right = window.innerWidth / 2;
+    camera.top = window.innerHeight / 2;
+    camera.bottom = -window.innerHeight / 2;
+    camera.updateProjectionMatrix();
+    
     renderer.setSize(window.innerWidth, window.innerHeight);
-    if (window.innerHeight > 0 && window.innerWidth > 0) {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        window.resizeTo(window.innerWidth, window.innerHeight);
-        camera.updateProjectionMatrix();
-    }
+
 }
 
 function switchMaterial(i) {
     body.material = bodyMaterial[i];
     glass.material = glassMaterial[i];
-    cylinder.material = glassMaterial[i];
-    light.material = lightMaterial[i];
+    cylinder.material = cylinderMaterial[i];
+    frontLight.material = frontLightMaterial[i];
+    backLight.material = backLightMaterial[i];
     tire1.material = tireMaterial[i];
     tire2.material = tireMaterial[i];
     tire3.material = tireMaterial[i];
     tire4.material = tireMaterial[i];
     carpete.material = tireMaterial[i];
+    spotLight1.material = spotlightMaterial[i];
+    spotLight2.material = spotlightMaterial[i];
+    spotLight3.material = spotlightMaterial[i];
 }
 
 function render() {
     'use strict';
+
+    var delta = clock.getDelta();
+
     renderer.render(scene, camera);
     if (wKey) {
         if (!basic)
@@ -391,7 +408,7 @@ function render() {
         basic = !basic;
         wKey = !wKey;
     }
-    
+  
     if (eKey) {
         phong = !phong;
         lambert = !lambert;
@@ -401,11 +418,18 @@ function render() {
             switchMaterial(1);
         eKey = !eKey;
     }
+
+    /*------------Arrow keys----------*/
+    if (leftArrow)
+        palanque.rotation.y -= 3 * delta;
+    if (rightArrow)
+        palanque.rotation.y += 3 * delta;
     
 }
 
 function init() {
     'use strict';
+    clock = new THREE.Clock();
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
@@ -481,9 +505,13 @@ function animate() {
     'use strict';
     /*------------Cameras----------*/
     if (camera1) {
-        perspectiveCamera.position.x = 50 * scale;
-        perspectiveCamera.position.y = 50 * scale;
-        perspectiveCamera.position.z = 50 * scale;
+        perspectiveCamera.position.x = 60 * scale;
+        perspectiveCamera.position.y = 60 * scale;
+        perspectiveCamera.position.z = 60 * scale;
+        perspectiveCamera.left = camera.left;
+        perspectiveCamera.right = camera.right;
+        perspectiveCamera.top = camera.top;
+        perspectiveCamera.bottom = camera.bottom;
         camera = perspectiveCamera;
         camera.lookAt(scene.position);
     }
@@ -491,6 +519,10 @@ function animate() {
         orthographicCamera.position.x = 0 * scale;
         orthographicCamera.position.y = 0 * scale;
         orthographicCamera.position.z = 100 * scale;
+        orthographicCamera.left = camera.left;
+        orthographicCamera.right = camera.right;
+        orthographicCamera.top = camera.top;
+        orthographicCamera.bottom = camera.bottom;
         camera = orthographicCamera;
         camera.lookAt(scene.position);
     }
@@ -522,14 +554,6 @@ function animate() {
     }
     else if (!light3)
         scene.remove(spotLight3);
-
-    /*------------Arrow keys----------*/
-    if (leftArrow) {
-        palanque.rotation.y -= 0.03;
-    }
-    if (rightArrow) {
-        palanque.rotation.y += 0.03;
-    }
 
     render();
     requestAnimationFrame(animate);
