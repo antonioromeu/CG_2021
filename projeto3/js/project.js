@@ -4,6 +4,7 @@ var near = 1;
 var clock;
 var far = 1000 * scale;
 var spotLight1, spotLight2, spotLight3;
+// var smesh1, smesh2, smesh3;
 var slMeshes;
 
 var pink = new THREE.Color(0xb57aae);
@@ -27,19 +28,21 @@ var obj, leftArrow = false, rightArrow = false;
 var qKey = true, eKey = false, wKey = false;
 var phong = true, lambert = false, basic = false;
 
-var bodyPhong = new THREE.MeshPhongMaterial({color: grey, wireframe: false, shininess: 51.2, specular: grey});
-var glassPhong = new THREE.MeshPhongMaterial({color: obsidian, wireframe: false, shininess: 38.4, specular: obsidian});
-var backLightPhong = new THREE.MeshPhongMaterial({color: red, wireframe: false, shininess: 32, specular: white});
-var frontLightPhong = new THREE.MeshPhongMaterial({color: white, wireframe: false, shininess: 32, specular: white});
-var tirePhong = new THREE.MeshPhongMaterial({color: black, wireframe: false, shininess: 10, specular: black});
-var cylinderPhong = new THREE.MeshPhongMaterial({color: copper, wireframe: false, shininess: 12.8, specular: copper/*[0.39, 0.24, 0.086014, 1.0]*/});
+var bodyPhong = new THREE.MeshPhongMaterial({color: grey, wireframe: false, shininess: 120, specular: grey});
+var glassPhong = new THREE.MeshPhongMaterial({color: obsidian, wireframe: false, shininess: 50, specular: obsidian});
+var backLightPhong = new THREE.MeshPhongMaterial({color: red, wireframe: false, shininess: 8, specular: white});
+var frontLightPhong = new THREE.MeshPhongMaterial({color: white, wireframe: false, shininess: 8, specular: white});
+var tirePhong = new THREE.MeshPhongMaterial({color: black, wireframe: false, shininess: 5, specular: black});
+var cylinderPhong = new THREE.MeshPhongMaterial({color: copper, wireframe: false, shininess: 15, specular: copper/*[0.39, 0.24, 0.086014, 1.0]*/});
 
-var bodyLambert = new THREE.MeshLambertMaterial({color: grey, wireframe: false, shininess: 51.2, specular: 0.508273});
-var glassLambert = new THREE.MeshLambertMaterial({color: obsidian, wireframe: false, shininess: 38.4, specular: 0.332741});
-var backLightLambert = new THREE.MeshLambertMaterial({color: red, wireframe: false, shininess: 32, specular: 0.7});
-var frontLightLambert = new THREE.MeshLambertMaterial({color: white, wireframe: false, shininess: 32, specular: 0.7});
-var tireLambert = new THREE.MeshLambertMaterial({color: black, wireframe: false, shininess: 10, specular: 0.4});
+var bodyLambert = new THREE.MeshLambertMaterial({color: grey, wireframe: false});
+var glassLambert = new THREE.MeshLambertMaterial({color: obsidian, wireframe: false});
+var backLightLambert = new THREE.MeshLambertMaterial({color: red, wireframe: false});
+var frontLightLambert = new THREE.MeshLambertMaterial({color: white, wireframe: false});
+var tireLambert = new THREE.MeshLambertMaterial({color: black, wireframe: false});
 var cylinderLambert = new THREE.MeshLambertMaterial({color: copper, wireframe: false});
+
+//shing
 
 var bodyBasic = new THREE.MeshBasicMaterial({color: grey, wireframe: false});
 var glassBasic = new THREE.MeshBasicMaterial({color: obsidian, wireframe: false});
@@ -314,7 +317,7 @@ function createPalanque() {
 function createScene() {
     'use strict';
     scene = new THREE.Scene();
-    scene.background = white;
+    scene.background = 0x000000;
 
     spotLight1 = createSpotLight(-21 * scale, 15 * scale, 14 * scale);
     spotLight2 = createSpotLight(10 * scale, 15 * scale, 10 * scale);
@@ -337,18 +340,18 @@ function createCamera() {
 
 function createSpotLight(x, y, z) {
     var body = new THREE.Object3D();
-    var geometry = new THREE.SphereGeometry(5, 200, 200);
-    var mesh = new THREE.Mesh(geometry, spotlightMaterial);
+    var geometry = new THREE.SphereGeometry(20, 20, 20);
+    var mesh = new THREE.Mesh(geometry, spotlightMaterial[0]);
     body.add(mesh);
-    geometry = new THREE.ConeGeometry(6, 15, 200);
-    mesh = new THREE.Mesh(geometry, spotlightMaterial);
+    geometry = new THREE.ConeGeometry(24, 60, 20);
+    mesh = new THREE.Mesh(geometry, spotlightMaterial[0]);
     mesh.rotateX(-Math.PI/2);
     mesh.position.set(0, 0, 5);
     body.add(mesh);
     body.position.set(x, y, z);
     body.lookAt(new THREE.Vector3(0, 0, 0));
 
-    var spotLight = new THREE.SpotLight(0xffffff, 0.8, 0, 1.2);
+    var spotLight = new THREE.SpotLight(0xffffff, 1.5, 0, 1.2);
     spotLight.position.set(x, y, z);
     spotLight.castShadow = false;
     spotLight.add(body);
@@ -361,17 +364,29 @@ function createDirectional(x, y, z) {
     scene.add(directionalLight);
 }
 
+function resizeOrto(camera) {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    var m = Math.min(camera.aspect, 1/camera.aspect);
+    camera.left = -window.innerWidth * camera.aspect / 2;
+    camera.right = window.innerWidth * camera.aspect / 2;
+    camera.top = camera.aspect*window.innerHeight / 2;
+    camera.bottom = camera.aspect*-window.innerHeight / 2;
+    camera.updateProjectionMatrix();
+}
+
+function resizePers(camera) {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    // camera.left = -window.innerWidth / 2;
+    // camera.right = window.innerWidth / 2;
+    // camera.top = window.innerHeight / 2;
+    // camera.bottom = -window.innerHeight / 2;
+    camera.updateProjectionMatrix();
+}
+
 function onResize() {
     'use strict';
-    camera.aspect = window.innerWidth / window.innerHeight;
-    window.resizeTo(window.innerWidth, window.innerHeight);
-
-    camera.left = -window.innerWidth / 2;
-    camera.right = window.innerWidth / 2;
-    camera.top = window.innerHeight / 2;
-    camera.bottom = -window.innerHeight / 2;
-    camera.updateProjectionMatrix();
-    
+    resizeOrto(orthographicCamera);
+    resizePers(perspectiveCamera);
     renderer.setSize(window.innerWidth, window.innerHeight);
 
 }
@@ -390,6 +405,7 @@ function switchMaterial(i) {
     spotLight1.material = spotlightMaterial[i];
     spotLight2.material = spotlightMaterial[i];
     spotLight3.material = spotlightMaterial[i];
+    // spotLight1.GetComponent<Renderer>().material = spotlightMaterial[i];
 }
 
 function render() {
