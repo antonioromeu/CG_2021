@@ -351,7 +351,7 @@ function createSpotLight(x, y, z) {
     body.position.set(x, y, z);
     body.lookAt(new THREE.Vector3(0, 0, 0));
 
-    var spotLight = new THREE.SpotLight(0xffffff, 1.5, 0, 1.2);
+    var spotLight = new THREE.SpotLight(blue, 1.5, 0, 1.2);
     spotLight.position.set(x, y, z);
     spotLight.castShadow = false;
     spotLight.add(body);
