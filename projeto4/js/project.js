@@ -19,58 +19,61 @@ var red = new THREE.Color(0xbf0000);
 
 var field;
 var bKey = false, iKey = false, dKey = false, pKey = false, rKey = false, sKey = false, wKey = false;
+var texture, bump, material;
+var directionalLight;
 
 function createField() {
-    var texture, bump, material, plane;
+    field = new THREE.Object3D();
 
-    bump = new THREE.TextureLoader().load("https://www.startpage.com/av/proxy-image?piurl=https%3A%2F%2Fwww.sketchuptextureclub.com%2Fpublic%2Ftexture%2F143-frozen-grass-texture-seamless-hr-bump.jpg&sp=1606473896T7ced9d0fa687eaaa4201b5e917ce06ba395ac0b0963d02f7f6d85265d4c8016d");
+    var bump_loader = new THREE.TextureLoader();
+    bump = bump_loader.load("bumpMap.jpg");
 
-    texture = new THREE.TextureLoader().load("./img/textureMap.jpg");
-
-    // var textureLoader = new THREE.TextureLoader();
-    // var ball_texture = textureLoader.load("golf_ball_texture.jpg");
-    // assuming you want the texture to repeat in both directions:
+    var texture_loader = new THREE.TextureLoader();
+    texture = texture_loader.load("textureMap.jpg");
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(8, 8);
 
-    // how many times to repeat in each direction; the default is (1,1),
-    //   which is probably why your example wasn't working
-    // texture.repeat.set(4, 4); 
-
-    material = new THREE.MeshPhongMaterial({bumpMap: bump, map: texture});
-    // material.bumpMap = bump;
-    // material.map = texture;
-    plane = new THREE.Mesh(new THREE.PlaneGeometry(400, 3500), material);
-    plane.material.side = THREE.DoubleSide;
-    // plane.position.x = 100;
-
-    // rotation.z is rotation around the z-axis, measured in radians (rather than degrees)
-    // Math.PI = 180 degrees, Math.PI / 2 = 90 degrees, etc.
-    plane.rotation.z = Math.PI / 2;
-
-    scene.add(plane);
+    // material = new THREE.MeshPhongMaterial({ bumpMap: bump, map: texture });
+    material = new THREE.MeshBasicMaterial({ map: texture });
+    var mesh = new THREE.Mesh(new THREE.PlaneGeometry(100, 100), material);
+    mesh.material.side = THREE.DoubleSide;
+    mesh.rotation.z = Math.PI / 2;
+    mesh.rotation.x = -Math.PI / 2;
+    field.position.set(0, 0, 0);
+    field.add(mesh);
+    scene.add(field);
 }
 
 function createScene() {
     'use strict';
     scene = new THREE.Scene();
-    scene.background = 0x000000;
+    scene.background = 0xffffff;
+    createDirectional(0, 0, 0);
+}
+
+function createDirectional(x, y, z) {
+    'use strict';
+    directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(x, y, z);
+    scene.add(directionalLight);
 }
 
 function createCamera() {
     'use strict';
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, near, far);
-    camera.position.set(0, 20, 100);
-    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    camera.position.set(100, 100, 100);
+    camera.lookAt(scene.position);
+    // controls = new THREE.OrbitControls(camera, renderer.domElement);
     // controls.autoRotate = true;
-    controls.target.set(0, 0, 0);
-    controls.update();
+    // controls.target.set(0, 0, 0);
+    // controls.update();
 }
 
 function onResize() {
     'use strict';
-    resizeOrto(orthographicCamera);
-    resizePers(perspectiveCamera);
+    // resizeOrto(orthographicCamera);
+    // resizePers(perspectiveCamera);
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
@@ -80,26 +83,6 @@ function render() {
     var delta = clock.getDelta();
 
     renderer.render(scene, camera);
-    // if (wKey) {
-    //     if (!basic)
-    //         switchMaterial(2);
-    //     else if (phong)
-    //         switchMaterial(0);
-    //     else if (lambert)
-    //         switchMaterial(1);
-    //     basic = !basic;
-    //     wKey = !wKey;
-    // }
-  
-    // if (eKey) {
-    //     phong = !phong;
-    //     lambert = !lambert;
-    //     if (phong && !wKey)
-    //         switchMaterial(0);
-    //     else if (lambert && !wKey)
-    //         switchMaterial(1);
-    //     eKey = !eKey;
-    // }
 }
 
 function init() {
@@ -109,13 +92,12 @@ function init() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
     createScene();
+    createField();
     createCamera();
-    field = new THREE.Object3D();
-    field.add(createField()); 
-    controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.addEventListener('change', render);
-    controls.enableZoom = false;
-    scene.add(field);
+    // controls = new THREE.OrbitControls(camera, renderer.domElement);
+    // controls.addEventListener('change', render);
+    // controls.enableZoom = false;
+    // scene.add(field);
     render();
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
@@ -193,9 +175,14 @@ function animate() {
     // }
     // else if (!light3)
     //     scene.remove(spotLight3);
+    /// else if (!light3)
+    //     scene.remove(spotLight3);
+
+    // else if (!light3)
+    //     scene.remove(spotLight3);
 
     render();
     requestAnimationFrame(animate);
-    controls.update();
-    renderer.render( scene, camera );
+    // controls.update();
+    renderer.render(scene, camera);
 }
