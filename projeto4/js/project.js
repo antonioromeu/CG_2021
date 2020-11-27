@@ -1,9 +1,9 @@
 
-var controls, camera, camera1, camera2, orthographicCamera, perspectiveCamera, scene, renderer;
+var clock, controls, camera, scene, renderer;
 var scale = 6;
 var near = 1;
-var clock;
 var far = 1000 * scale;
+var phong = true, basic = false;
 
 var pink = new THREE.Color(0xb57aae);
 var blue = new THREE.Color(0x55647e);
@@ -17,39 +17,91 @@ var grey = new THREE.Color(0x666666);
 var copper = new THREE.Color(0x592a1d);
 var red = new THREE.Color(0xbf0000);
 
-var field;
-var bKey = false, iKey = false, dKey = false, pKey = false, rKey = false, sKey = false, wKey = false;
-var texture, bump, material;
-var directionalLight;
+var bKey = false, iKey = true, dKey = false, pKey = false, rKey = false, sKey = true, wKey = false;
+var field, ball, obj, flag, pole;
+var fieldTexture, fieldBump, ballBump, cubeTexture;
+var pointLight, directionalLight;
+
+ballBump = new THREE.TextureLoader().load("ballBumpMap.jpg");
+fieldBump = new THREE.TextureLoader().load("bumpMap.jpg");
+fieldTexture = new THREE.TextureLoader().load("textureMap.jpg");
+cubeTexture = new THREE.CubeTextureLoader().load([
+    "./cubemap/px.png",
+    "./cubemap/nx.png",
+    "./cubemap/py.png",
+    "./cubemap/ny.png",
+    "./cubemap/pz.png",
+    "./cubemap/nz.png",
+])
+
+var ballPhong = new THREE.MeshPhongMaterial({ color: white, specular: white, wireframe: false, bumpMap: ballBump });
+var flagPhong = new THREE.MeshPhongMaterial({ color: red, specular: red, wireframe: false, side: THREE.DoubleSide });
+var polePhong = new THREE.MeshPhongMaterial({ color: grey, specular: grey, wireframe: false });
+var fieldPhong = new THREE.MeshPhongMaterial({ bumpMap: fieldBump, wireframe: false, map: fieldTexture, side: THREE.DoubleSide });
+
+var ballBasic = new THREE.MeshBasicMaterial({ color: white, wireframe: false });
+var flagBasic = new THREE.MeshBasicMaterial({ color: red, wireframe: false, side: THREE.DoubleSide });
+var poleBasic = new THREE.MeshBasicMaterial({ color: grey, wireframe: false });
+var fieldBasic = new THREE.MeshBasicMaterial({ map: fieldTexture, wireframe: false, side: THREE.DoubleSide });
+
+var ballMaterial = [ballPhong, ballBasic];
+var flagMaterial = [flagPhong, flagBasic];
+var poleMaterial = [polePhong, poleBasic];
+var fieldMaterial = [fieldPhong, fieldBasic];
 
 function createField() {
-    field = new THREE.Object3D();
+    fieldBump.wrapS = THREE.RepeatWrapping;
+    fieldBump.wrapT = THREE.RepeatWrapping;
+    fieldBump.repeat.set(6, 6);
 
-    var bump_loader = new THREE.TextureLoader();
-    bump = bump_loader.load("bumpMap.jpg");
+    fieldTexture.wrapS = THREE.RepeatWrapping;
+    fieldTexture.wrapT = THREE.RepeatWrapping;
+    fieldTexture.repeat.set(6, 6);
 
-    var texture_loader = new THREE.TextureLoader();
-    texture = texture_loader.load("textureMap.jpg");
-    texture.wrapS = THREE.RepeatWrapping;
-    texture.wrapT = THREE.RepeatWrapping;
-    texture.repeat.set(8, 8);
-
-    // material = new THREE.MeshPhongMaterial({ bumpMap: bump, map: texture });
-    material = new THREE.MeshBasicMaterial({ map: texture });
-    var mesh = new THREE.Mesh(new THREE.PlaneGeometry(100, 100), material);
-    mesh.material.side = THREE.DoubleSide;
-    mesh.rotation.z = Math.PI / 2;
-    mesh.rotation.x = -Math.PI / 2;
+    var fieldMaterial = new THREE.MeshPhongMaterial({ bumpMap: fieldBump, map: fieldTexture, side: THREE.DoubleSide });
+    field = new THREE.Mesh(new THREE.PlaneGeometry(300, 300), fieldMaterial);
+    field.rotation.z = Math.PI / 2;
+    field.rotation.x = -Math.PI / 2;
     field.position.set(0, 0, 0);
-    field.add(mesh);
     scene.add(field);
+}
+
+function createBall() {
+    var radius = 2;
+    var ballMaterial = new THREE.MeshPhongMaterial({ color: white, specular: white, bumpMap: ballBump });
+    ball = new THREE.Mesh(new THREE.SphereGeometry(radius, 16, 16), ballMaterial);
+    ball.position.set(0, radius, 0);
+    scene.add(ball);
+}
+
+function createFlag() {
+    obj = new THREE.Object3D();
+    var radius = 0.7;
+    var poleHeight = 20;
+    var flagHeight = 8;
+    
+    var poleMaterial = new THREE.MeshPhongMaterial({ color: grey, specular: grey });
+    pole = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, poleHeight, 16), poleMaterial);    
+    obj.add(pole);
+
+    var flagMaterial = new THREE.MeshPhongMaterial({ color: red, specular: red, side: THREE.DoubleSide })
+    var flagGeometry = new THREE.Geometry();
+    flagGeometry.vertices= [new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, flagHeight, 0), new THREE.Vector3(flagHeight, flagHeight/2, flagHeight)];
+    flagGeometry.faces = [new THREE.Face3(1, 0, 2)];
+    flagGeometry.computeFaceNormals();
+    flag = new THREE.Mesh(flagGeometry, flagMaterial);
+    flag.position.set(0, (poleHeight / 2) - flagHeight, 0);
+    obj.add(flag);
+    obj.position.set(20, poleHeight / 2, 20);
+    scene.add(obj);
 }
 
 function createScene() {
     'use strict';
     scene = new THREE.Scene();
-    scene.background = 0xffffff;
-    createDirectional(0, 0, 0);
+    scene.background = cubeTexture;
+    createDirectional(50, 50, 50);
+    createPoint(0, 50, 0);
 }
 
 function createDirectional(x, y, z) {
@@ -59,21 +111,40 @@ function createDirectional(x, y, z) {
     scene.add(directionalLight);
 }
 
+function createPoint(x, y, z) {
+    'use strict';
+    pointLight = new THREE.PointLight(0xffffff, 1, 0);
+    pointLight.position.set(x, y, z);
+    scene.add(pointLight);
+}
+
 function createCamera() {
     'use strict';
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, near, far);
-    camera.position.set(100, 100, 100);
+    camera.position.set(250, 250, 250);
     camera.lookAt(scene.position);
-    // controls = new THREE.OrbitControls(camera, renderer.domElement);
-    // controls.autoRotate = true;
-    // controls.target.set(0, 0, 0);
-    // controls.update();
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.autoRotate = true;
+    controls.target.set(0, 0, 0);
+    controls.update();
+}
+
+function switchMaterial(i) {
+    ball.material = ballMaterial[i];
+    pole.material = poleMaterial[i];
+    flag.material = flagMaterial[i];
+    field.material = fieldMaterial[i];
+}
+
+function switchWireframe() {
+    ball.wireframe = !ball.wireframe;
+    pole.wireframe = !pole.wireframe;
+    flag.wireframe = !flag.wireframe;
+    field.wireframe = !field.wireframe;
 }
 
 function onResize() {
     'use strict';
-    // resizeOrto(orthographicCamera);
-    // resizePers(perspectiveCamera);
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
@@ -82,25 +153,32 @@ function render() {
 
     var delta = clock.getDelta();
 
-    renderer.render(scene, camera);
+    // renderer.render(scene, camera);
+    if (iKey) {
+        if (phong)
+            switchMaterial(0);
+        else if (basic)
+            switchMaterial(1);
+        phong = !phong;
+        basic = !basic;
+        iKey = !iKey;
+    }
+    flag.rotation.y += 0.3 * delta;
 }
 
 function init() {
     'use strict';
-    clock = new THREE.Clock();
+    clock = new THREE.Clock(true);
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
     createScene();
     createField();
     createCamera();
-    // controls = new THREE.OrbitControls(camera, renderer.domElement);
-    // controls.addEventListener('change', render);
-    // controls.enableZoom = false;
-    // scene.add(field);
+    createBall();
+    createFlag();
     render();
     window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("keyup", onKeyUp);
     window.addEventListener("resize", onResize);
 }
 
@@ -126,61 +204,41 @@ function onKeyDown(e) {
             sKey = !sKey;
             break;
         case 87: // w
-            wKey = !wKey;
+            ball.wireframe = !ball.wireframe;
+            pole.wireframe = !pole.wireframe;
+            flag.wireframe = !flag.wireframe;
+            field.wireframe = !field.wireframe;
+            // wKey = !wKey;
             break;
-        case 49: // light 1
-            light1 = !light1;
-            break;
-        case 50: // light 2
-            light2 = !light2;
-            break;
-        case 51: // light 3
-            light3 = !light3;
-            break;
-    }
-}
-
-function onKeyUp(e) {
-    'use strict';
-    switch (e.keyCode) {
     }
 }
 
 function animate() {
     'use strict';
-    // /*------------Q/W/E Key----------*/
-    // if (qKey) {
-    //     scene.remove(directionalLight);
-    //     scene.add(directionalLight);
-    // }
-    // else if (!qKey)
-    //     scene.remove(directionalLight);
+    if (dKey) {
+        scene.remove(directionalLight);
+        scene.add(directionalLight);
+    }
+    else if (!dKey)
+        scene.remove(directionalLight);
     
-    // /*------------Lights----------*/
-    // if (light1) {
-    //     scene.remove(spotLight1);
-    //     scene.add(spotLight1);
-    // }
-    // else if (!light1)
-    //     scene.remove(spotLight1);
-    // if (light2) {
-    //     scene.remove(spotLight2);
-    //     scene.add(spotLight2);
-    // }
-    // else if (!light2)
-    //     scene.remove(spotLight2);
-    // if (light3) {
-    //     scene.remove(spotLight3);
-    //     scene.add(spotLight3);
-    // }
-    // else if (!light3)
-    //     scene.remove(spotLight3);
-    /// else if (!light3)
-    //     scene.remove(spotLight3);
-
-    // else if (!light3)
-    //     scene.remove(spotLight3);
-
+    if (pKey) {
+        scene.remove(pointLight);
+        scene.add(pointLight);
+    }
+    else if (!pKey)
+        scene.remove(pointLight);
+    
+    if (sKey)
+        clock.start();
+    else if (!sKey)
+        clock.stop();
+    
+    // if (wKey)
+    //     switchWireframe();
+    // else if (!wKey)
+    //     switchWireframe();
+    
     render();
     requestAnimationFrame(animate);
     // controls.update();
