@@ -1,4 +1,5 @@
-var camera, camera1, camera2, orthographicCamera, perspectiveCamera, scene, renderer;
+
+var controls, camera, camera1, camera2, orthographicCamera, perspectiveCamera, scene, renderer;
 var scale = 6;
 var near = 1;
 var clock;
@@ -17,21 +18,17 @@ var copper = new THREE.Color(0x592a1d);
 var red = new THREE.Color(0xbf0000);
 
 var field;
-// var palanque, body, glass, backLight, frontLight,  cylinder, carpete, tire1, tire2, tire2, tire3, tire4;
-// var floor;
-// var palanqueHeight = 5 * scale;
-// var directionalLight; 
-// var light1 = false, light2 = false, light3 = false;
-// var obj, leftArrow = false, rightArrow = false;
-// var qKey = true, eKey = false, wKey = false;
-// var phong = true, lambert = false, basic = false;
 var bKey = false, iKey = false, dKey = false, pKey = false, rKey = false, sKey = false, wKey = false;
 
 function createField() {
     var texture, bump, material, plane;
 
-    bump = THREE.ImageUtils.loadTexture("../img/bumpMap.jpg");
+    bump = new THREE.TextureLoader().load("https://www.startpage.com/av/proxy-image?piurl=https%3A%2F%2Fwww.sketchuptextureclub.com%2Fpublic%2Ftexture%2F143-frozen-grass-texture-seamless-hr-bump.jpg&sp=1606473896T7ced9d0fa687eaaa4201b5e917ce06ba395ac0b0963d02f7f6d85265d4c8016d");
 
+    texture = new THREE.TextureLoader().load("./img/textureMap.jpg");
+
+    // var textureLoader = new THREE.TextureLoader();
+    // var ball_texture = textureLoader.load("golf_ball_texture.jpg");
     // assuming you want the texture to repeat in both directions:
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
@@ -40,10 +37,9 @@ function createField() {
     //   which is probably why your example wasn't working
     // texture.repeat.set(4, 4); 
 
-    material = new THREE.MeshPhongMaterial();
-    material.bumpMap = bump;
-    texture = THREE.ImageUtils.loadTexture("../img/textureMap.jpg");
-    material.map = texture;
+    material = new THREE.MeshPhongMaterial({bumpMap: bump, map: texture});
+    // material.bumpMap = bump;
+    // material.map = texture;
     plane = new THREE.Mesh(new THREE.PlaneGeometry(400, 3500), material);
     plane.material.side = THREE.DoubleSide;
     // plane.position.x = 100;
@@ -64,10 +60,11 @@ function createScene() {
 function createCamera() {
     'use strict';
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, near, far);
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.autoRotate = true;
     camera.position.set(0, 20, 100);
-    // controls.update();
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    // controls.autoRotate = true;
+    controls.target.set(0, 0, 0);
+    controls.update();
 }
 
 function onResize() {
@@ -115,8 +112,10 @@ function init() {
     createCamera();
     field = new THREE.Object3D();
     field.add(createField()); 
-    // AMANHA RESOLVEMOS ISTO TA AQUI O ERRO O ROMEU DESCOBRIIU ++XP MT INTELIGENTE
-    scene.add(flied);
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.addEventListener('change', render);
+    controls.enableZoom = false;
+    scene.add(field);
     render();
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
@@ -167,33 +166,33 @@ function onKeyUp(e) {
 
 function animate() {
     'use strict';
-    /*------------Q/W/E Key----------*/
-    if (qKey) {
-        scene.remove(directionalLight);
-        scene.add(directionalLight);
-    }
-    else if (!qKey)
-        scene.remove(directionalLight);
+    // /*------------Q/W/E Key----------*/
+    // if (qKey) {
+    //     scene.remove(directionalLight);
+    //     scene.add(directionalLight);
+    // }
+    // else if (!qKey)
+    //     scene.remove(directionalLight);
     
-    /*------------Lights----------*/
-    if (light1) {
-        scene.remove(spotLight1);
-        scene.add(spotLight1);
-    }
-    else if (!light1)
-        scene.remove(spotLight1);
-    if (light2) {
-        scene.remove(spotLight2);
-        scene.add(spotLight2);
-    }
-    else if (!light2)
-        scene.remove(spotLight2);
-    if (light3) {
-        scene.remove(spotLight3);
-        scene.add(spotLight3);
-    }
-    else if (!light3)
-        scene.remove(spotLight3);
+    // /*------------Lights----------*/
+    // if (light1) {
+    //     scene.remove(spotLight1);
+    //     scene.add(spotLight1);
+    // }
+    // else if (!light1)
+    //     scene.remove(spotLight1);
+    // if (light2) {
+    //     scene.remove(spotLight2);
+    //     scene.add(spotLight2);
+    // }
+    // else if (!light2)
+    //     scene.remove(spotLight2);
+    // if (light3) {
+    //     scene.remove(spotLight3);
+    //     scene.add(spotLight3);
+    // }
+    // else if (!light3)
+    //     scene.remove(spotLight3);
 
     render();
     requestAnimationFrame(animate);
