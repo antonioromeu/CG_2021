@@ -1,5 +1,4 @@
-
-var clock, controls, camera, scene, renderer;
+var clock, delta, controls, camera, scene, renderer;
 var scale = 6;
 var near = 1;
 var far = 1000 * scale;
@@ -18,9 +17,10 @@ var copper = new THREE.Color(0x592a1d);
 var red = new THREE.Color(0xbf0000);
 
 var bKey = false, iKey = true, dKey = false, pKey = false, rKey = false, sKey = true, wKey = false;
-var field, ball, obj, flag, pole;
-var fieldTexture, fieldBump, ballBump, cubeTexture;
+var field, ball, obj, flag, pole, planeMesh;
+var fieldTexture, fieldBump, ballBump, cubeTexture, stopTexture;
 var pointLight, directionalLight;
+var xBall, zBall, newX, newZ, angle = 0, radius = 2;
 
 ballBump = new THREE.TextureLoader().load("./img/ballBumpMap.jpg");
 fieldBump = new THREE.TextureLoader().load("./img/bumpMap.jpg");
@@ -33,6 +33,7 @@ cubeTexture = new THREE.CubeTextureLoader().load([
     "./img/cubemap/pz.png",
     "./img/cubemap/nz.png",
 ])
+stopTexture = new THREE.TextureLoader().load("./img/stop.jpg");
 
 var ballPhong = new THREE.MeshPhongMaterial({ color: white, specular: white, wireframe: false, bumpMap: ballBump });
 var flagPhong = new THREE.MeshPhongMaterial({ color: red, specular: red, wireframe: false, side: THREE.DoubleSide });
@@ -47,9 +48,10 @@ var fieldBasic = new THREE.MeshBasicMaterial({ map: fieldTexture, wireframe: fal
 var ballMaterial = [ballPhong, ballBasic];
 var flagMaterial = [flagPhong, flagBasic];
 var poleMaterial = [polePhong, poleBasic];
-var fieldMaterial = [fieldPhong, fieldBasic];
+var fieldMaterial = [fieldPhong, fieldBasic];  
 
 function createField() {
+    'use strict';
     fieldBump.wrapS = THREE.RepeatWrapping;
     fieldBump.wrapT = THREE.RepeatWrapping;
     fieldBump.repeat.set(6, 6);
@@ -67,7 +69,7 @@ function createField() {
 }
 
 function createBall() {
-    var radius = 2;
+    'use strict';
     var ballMaterial = new THREE.MeshPhongMaterial({ color: white, specular: white, bumpMap: ballBump });
     ball = new THREE.Mesh(new THREE.SphereGeometry(radius, 16, 16), ballMaterial);
     ball.position.set(0, radius, 0);
@@ -75,6 +77,7 @@ function createBall() {
 }
 
 function createFlag() {
+    'use strict';
     obj = new THREE.Object3D();
     var radius = 0.7;
     var poleHeight = 20;
@@ -101,7 +104,7 @@ function createScene() {
     scene = new THREE.Scene();
     scene.background = cubeTexture;
     createDirectional(50, 50, 50);
-    createPoint(0, 50, 0);
+    createPoint(-30, 50, 0);
 }
 
 function createDirectional(x, y, z) {
@@ -129,31 +132,78 @@ function createCamera() {
     controls.update();
 }
 
+function ballRotation(delta) {
+    'use strict';
+    angle += 0.6 * delta;
+    
+    xBall = ball.position.x;
+    zBall = ball.position.z;
+    
+    newX = 40 * Math.cos(angle) - 40;
+    newZ = 30 * Math.sin(angle);
+
+    ball.position.x = newX;
+    ball.position.z = newZ;
+}
+
 function switchMaterial(i) {
+    'use strict';
     ball.material = ballMaterial[i];
     pole.material = poleMaterial[i];
     flag.material = flagMaterial[i];
     field.material = fieldMaterial[i];
 }
 
-function switchWireframe() {
-    ball.wireframe = !ball.wireframe;
-    pole.wireframe = !pole.wireframe;
-    flag.wireframe = !flag.wireframe;
-    field.wireframe = !field.wireframe;
+function showWarning() {
+    'use strict';
+    scene.remove(planeMesh);
+    var camVector = new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z);
+    camVector.normalize();
+
+    var planeGeometry = new THREE.PlaneGeometry(40, 40);
+    var planeMaterial = new THREE.MeshBasicMaterial({ map: stopTexture });
+    planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
+    planeMesh.lookAt(camVector);
+    var dist = new THREE.Vector3();
+    dist = camVector.multiplyScalar(220);
+    planeMesh.position.set(dist.getComponent(0), dist.getComponent(1), dist.getComponent(2));
+    scene.add(planeMesh);
 }
 
 function onResize() {
     'use strict';
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function resetScene() {
+    'use strict';
+    ball.position.set(0, radius, 0);
+    obj.rotation.y = 0;
+    angle = 0;
+    scene.remove(planeMesh);
+    scene.remove(directionalLight);
+    scene.remove(pointLight);
+    switchMaterial(0);
+    ball.material.wireframe = false;
+    pole.material.wireframe = false;
+    flag.material.wireframe = false;
+    field.material.wireframe = false;
+    phong = true;
+    basic = false;
+    sKey = true;
+    rKey = false;
+    bKey = false;
+    dKey = false;
+    iKey = false;
+    pKey = false;
+    wKey = false;
+    clock.start();
 }
 
 function render() {
     'use strict';
-
-    var delta = clock.getDelta();
-
-    // renderer.render(scene, camera);
     if (iKey) {
         if (phong)
             switchMaterial(0);
@@ -163,12 +213,16 @@ function render() {
         basic = !basic;
         iKey = !iKey;
     }
-    flag.rotation.y += 0.3 * delta;
+    var delta = clock.getDelta();
+    if (sKey)
+        obj.rotation.y += 1.2 * delta;
+    if (bKey && sKey)
+        ballRotation(delta);
 }
 
 function init() {
     'use strict';
-    clock = new THREE.Clock(true);
+    clock = new THREE.Clock();
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
@@ -204,11 +258,10 @@ function onKeyDown(e) {
             sKey = !sKey;
             break;
         case 87: // w
-            ball.wireframe = !ball.wireframe;
-            pole.wireframe = !pole.wireframe;
-            flag.wireframe = !flag.wireframe;
-            field.wireframe = !field.wireframe;
-            // wKey = !wKey;
+            ball.material.wireframe = !ball.material.wireframe;
+            pole.material.wireframe = !pole.material.wireframe;
+            flag.material.wireframe = !flag.material.wireframe;
+            field.material.wireframe = !field.material.wireframe;
             break;
     }
 }
@@ -229,16 +282,18 @@ function animate() {
     else if (!pKey)
         scene.remove(pointLight);
     
-    if (sKey)
-        clock.start();
-    else if (!sKey)
+    if (sKey) {
+        scene.remove(planeMesh);
+        if (!clock.running)
+            clock.start();
+    }
+    else if (!sKey && clock.running) {
         clock.stop();
-    
-    // if (wKey)
-    //     switchWireframe();
-    // else if (!wKey)
-    //     switchWireframe();
-    
+        showWarning();
+        if (rKey)
+            resetScene();
+    }
+
     render();
     requestAnimationFrame(animate);
     // controls.update();
