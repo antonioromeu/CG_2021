@@ -22,16 +22,16 @@ var field, ball, obj, flag, pole;
 var fieldTexture, fieldBump, ballBump, cubeTexture;
 var pointLight, directionalLight;
 
-ballBump = new THREE.TextureLoader().load("ballBumpMap.jpg");
-fieldBump = new THREE.TextureLoader().load("bumpMap.jpg");
-fieldTexture = new THREE.TextureLoader().load("textureMap.jpg");
+ballBump = new THREE.TextureLoader().load("./img/ballBumpMap.jpg");
+fieldBump = new THREE.TextureLoader().load("./img/bumpMap.jpg");
+fieldTexture = new THREE.TextureLoader().load("./img/textureMap.jpg");
 cubeTexture = new THREE.CubeTextureLoader().load([
-    "./cubemap/px.png",
-    "./cubemap/nx.png",
-    "./cubemap/py.png",
-    "./cubemap/ny.png",
-    "./cubemap/pz.png",
-    "./cubemap/nz.png",
+    "./img/cubemap/px.png",
+    "./img/cubemap/nx.png",
+    "./img/cubemap/py.png",
+    "./img/cubemap/ny.png",
+    "./img/cubemap/pz.png",
+    "./img/cubemap/nz.png",
 ])
 
 var ballPhong = new THREE.MeshPhongMaterial({ color: white, specular: white, wireframe: false, bumpMap: ballBump });
