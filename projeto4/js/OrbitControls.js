@@ -16,11 +16,9 @@
 
 THREE.OrbitControls = function ( object, domElement ) {
 
-	if ( domElement === undefined ) console.warn( 'THREE.OrbitControls: The second parameter "domElement" is now mandatory.' );
-	if ( domElement === document ) console.error( 'THREE.OrbitControls: "document" should not be used as the target "domElement". Please use "renderer.domElement" instead.' );
-
 	this.object = object;
-	this.domElement = domElement;
+
+	this.domElement = ( domElement !== undefined ) ? domElement : document;
 
 	// Set to false to disable this control
 	this.enabled = true;
@@ -132,7 +130,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 		var offset = new THREE.Vector3();
 
-		// so camera.up is the orbit axis
+		// so perspectiveCamera.up is the orbit axis
 		var quat = new THREE.Quaternion().setFromUnitVectors( object.up, new THREE.Vector3( 0, 1, 0 ) );
 		var quatInverse = quat.clone().inverse();
 
@@ -197,7 +195,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 			offset.setFromSpherical( spherical );
 
-			// rotate offset back to "camera-up-vector-is-up" space
+			// rotate offset back to "perspectiveCamera-up-vector-is-up" space
 			offset.applyQuaternion( quatInverse );
 
 			position.copy( scope.target ).add( offset );
@@ -222,7 +220,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 			scale = 1;
 
 			// update condition is:
-			// min(camera displacement, camera rotation in radians)^2 > EPS
+			// min(perspectiveCamera displacement, perspectiveCamera rotation in radians)^2 > EPS
 			// using small-angle approximation cos(x/2) = 1 - x^2 / 8
 
 			if ( zoomChanged ||
@@ -258,7 +256,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 		document.removeEventListener( 'mousemove', onMouseMove, false );
 		document.removeEventListener( 'mouseup', onMouseUp, false );
 
-		scope.domElement.removeEventListener( 'keydown', onKeyDown, false );
+		window.removeEventListener( 'keydown', onKeyDown, false );
 
 		//scope.dispatchEvent( { type: 'dispose' } ); // should this be added here?
 
@@ -380,7 +378,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 		return function pan( deltaX, deltaY ) {
 
-			var element = scope.domElement;
+			var element = scope.domElement === document ? scope.domElement.body : scope.domElement;
 
 			if ( scope.object.isPerspectiveCamera ) {
 
@@ -404,8 +402,8 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 			} else {
 
-				// camera neither orthographic nor perspective
-				console.warn( 'WARNING: OrbitControls.js encountered an unknown camera type - pan disabled.' );
+				// perspectiveCamera neither orthographic nor perspective
+				console.warn( 'WARNING: OrbitControls.js encountered an unknown perspectiveCamera type - pan disabled.' );
 				scope.enablePan = false;
 
 			}
@@ -428,7 +426,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 		} else {
 
-			console.warn( 'WARNING: OrbitControls.js encountered an unknown camera type - dolly/zoom disabled.' );
+			console.warn( 'WARNING: OrbitControls.js encountered an unknown perspectiveCamera type - dolly/zoom disabled.' );
 			scope.enableZoom = false;
 
 		}
@@ -449,7 +447,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 		} else {
 
-			console.warn( 'WARNING: OrbitControls.js encountered an unknown camera type - dolly/zoom disabled.' );
+			console.warn( 'WARNING: OrbitControls.js encountered an unknown perspectiveCamera type - dolly/zoom disabled.' );
 			scope.enableZoom = false;
 
 		}
@@ -484,7 +482,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 		rotateDelta.subVectors( rotateEnd, rotateStart ).multiplyScalar( scope.rotateSpeed );
 
-		var element = scope.domElement;
+		var element = scope.domElement === document ? scope.domElement.body : scope.domElement;
 
 		rotateLeft( 2 * Math.PI * rotateDelta.x / element.clientHeight ); // yes, height
 
@@ -672,7 +670,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 
 		rotateDelta.subVectors( rotateEnd, rotateStart ).multiplyScalar( scope.rotateSpeed );
 
-		var element = scope.domElement;
+		var element = scope.domElement === document ? scope.domElement.body : scope.domElement;
 
 		rotateLeft( 2 * Math.PI * rotateDelta.x / element.clientHeight ); // yes, height
 
@@ -1136,15 +1134,7 @@ THREE.OrbitControls = function ( object, domElement ) {
 	scope.domElement.addEventListener( 'touchend', onTouchEnd, false );
 	scope.domElement.addEventListener( 'touchmove', onTouchMove, false );
 
-	scope.domElement.addEventListener( 'keydown', onKeyDown, false );
-
-	// make sure element can receive keys.
-
-	if ( scope.domElement.tabIndex === - 1 ) {
-
-		scope.domElement.tabIndex = 0;
-
-	}
+	window.addEventListener( 'keydown', onKeyDown, false );
 
 	// force an update at start
 
@@ -1178,4 +1168,3 @@ THREE.MapControls = function ( object, domElement ) {
 
 THREE.MapControls.prototype = Object.create( THREE.EventDispatcher.prototype );
 THREE.MapControls.prototype.constructor = THREE.MapControls;
-// /* three-orbitcontrols addendum */ module.exports = exports.default = THREE.OrbitControls;

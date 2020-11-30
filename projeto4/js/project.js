@@ -1,7 +1,6 @@
-var clock, delta, controls, camera, scene, renderer;
-var scale = 6;
+var clock, delta, controls, camera, perspectiveCamera, pauseCamera, scene, pauseScene, renderer;
 var near = 1;
-var far = 1000 * scale;
+var far = 100000;
 var phong = true, basic = false;
 
 var pink = new THREE.Color(0xb57aae);
@@ -17,10 +16,10 @@ var copper = new THREE.Color(0x592a1d);
 var red = new THREE.Color(0xbf0000);
 
 var bKey = false, iKey = true, dKey = false, pKey = false, rKey = false, sKey = true, wKey = false;
-var field, ball, obj, flag, pole, planeMesh;
+var skybox, field, ball, obj, pauseObj, flag, pole, planeMesh;
 var fieldTexture, fieldBump, ballBump, cubeTexture, stopTexture;
 var pointLight, directionalLight;
-var xBall, zBall, newX, newZ, angle = 0, radius = 2;
+var xBall, zBall, newX, newZ, angle = 0, radius = 15;
 
 ballBump = new THREE.TextureLoader().load("./img/ballBumpMap.jpg");
 fieldBump = new THREE.TextureLoader().load("./img/bumpMap.jpg");
@@ -33,6 +32,13 @@ cubeTexture = new THREE.CubeTextureLoader().load([
     "./img/cubemap/pz.png",
     "./img/cubemap/nz.png",
 ])
+cubeTexture1 = new THREE.TextureLoader().load("./img/cubemap/px.png");
+cubeTexture2 = new THREE.TextureLoader().load("./img/cubemap/nx.png");
+cubeTexture3 = new THREE.TextureLoader().load("./img/cubemap/py.png");
+cubeTexture4 = new THREE.TextureLoader().load("./img/cubemap/ny.png");
+cubeTexture5 = new THREE.TextureLoader().load("./img/cubemap/pz.png");
+cubeTexture6 = new THREE.TextureLoader().load("./img/cubemap/nz.png");
+
 stopTexture = new THREE.TextureLoader().load("./img/stop.jpg");
 
 var ballPhong = new THREE.MeshPhongMaterial({ color: white, specular: white, wireframe: false, bumpMap: ballBump });
@@ -48,13 +54,13 @@ var fieldBasic = new THREE.MeshBasicMaterial({ map: fieldTexture, wireframe: fal
 var ballMaterial = [ballPhong, ballBasic];
 var flagMaterial = [flagPhong, flagBasic];
 var poleMaterial = [polePhong, poleBasic];
-var fieldMaterial = [fieldPhong, fieldBasic];  
+var fieldMaterial = [fieldPhong, fieldBasic];
 
 function createField() {
     'use strict';
     fieldBump.wrapS = THREE.RepeatWrapping;
     fieldBump.wrapT = THREE.RepeatWrapping;
-    fieldBump.repeat.set(6, 6);
+    fieldBump.repeat.set(2, 2);
 
     fieldTexture.wrapS = THREE.RepeatWrapping;
     fieldTexture.wrapT = THREE.RepeatWrapping;
@@ -79,9 +85,9 @@ function createBall() {
 function createFlag() {
     'use strict';
     obj = new THREE.Object3D();
-    var radius = 0.7;
-    var poleHeight = 20;
-    var flagHeight = 8;
+    var radius = 2;
+    var poleHeight = 60;
+    var flagHeight = 16;
     
     var poleMaterial = new THREE.MeshPhongMaterial({ color: grey, specular: grey });
     pole = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, poleHeight, 16), poleMaterial);    
@@ -95,16 +101,30 @@ function createFlag() {
     flag = new THREE.Mesh(flagGeometry, flagMaterial);
     flag.position.set(0, (poleHeight / 2) - flagHeight, 0);
     obj.add(flag);
-    obj.position.set(20, poleHeight / 2, 20);
+    obj.position.set(40, poleHeight / 2, 40);
     scene.add(obj);
 }
 
 function createScene() {
     'use strict';
     scene = new THREE.Scene();
-    scene.background = cubeTexture;
     createDirectional(50, 50, 50);
     createPoint(-30, 50, 0);
+}
+
+function createPauseScene() {
+    'use strict';
+    pauseScene = new THREE.Scene();
+    pauseScene.add(skybox);
+    pauseScene.add(pauseCamera);
+    pauseCamera.lookAt(new THREE.Vector3(0, 0, 0));
+    pauseObj = new THREE.Object3D();
+    var geometry = new THREE.BoxGeometry(150, 150, 150);
+    var material = new THREE.MeshBasicMaterial({ map: stopTexture });
+    var mesh = new THREE.Mesh(geometry, material);
+    pauseObj.add(mesh);
+    pauseObj.position.set(0, 0, 0);
+    pauseScene.add(pauseObj);
 }
 
 function createDirectional(x, y, z) {
@@ -123,25 +143,23 @@ function createPoint(x, y, z) {
 
 function createCamera() {
     'use strict';
-    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, near, far);
-    camera.position.set(250, 250, 250);
-    camera.lookAt(scene.position);
-    controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.autoRotate = true;
-    controls.target.set(0, 0, 0);
-    controls.update();
+    perspectiveCamera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, near, far);
+    perspectiveCamera.position.set(250, 250, 250);
+    perspectiveCamera.lookAt(scene.position);
+    controls = new THREE.OrbitControls(perspectiveCamera, renderer.domElement);
+    controls.enableZoom = false;
+    pauseCamera = new THREE.OrthographicCamera(window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, near, far);
+    pauseCamera.position.set(500, 0, 0);
+    pauseCamera.lookAt(scene.position);
 }
 
 function ballRotation(delta) {
     'use strict';
     angle += 0.6 * delta;
-    
     xBall = ball.position.x;
     zBall = ball.position.z;
-    
     newX = 40 * Math.cos(angle) - 40;
     newZ = 30 * Math.sin(angle);
-
     ball.position.x = newX;
     ball.position.z = newZ;
 }
@@ -154,27 +172,13 @@ function switchMaterial(i) {
     field.material = fieldMaterial[i];
 }
 
-function showWarning() {
-    'use strict';
-    scene.remove(planeMesh);
-    var camVector = new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z);
-    camVector.normalize();
-
-    var planeGeometry = new THREE.PlaneGeometry(40, 40);
-    var planeMaterial = new THREE.MeshBasicMaterial({ map: stopTexture });
-    planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
-    planeMesh.lookAt(camVector);
-    var dist = new THREE.Vector3();
-    dist = camVector.multiplyScalar(220);
-    planeMesh.position.set(dist.getComponent(0), dist.getComponent(1), dist.getComponent(2));
-    scene.add(planeMesh);
-}
-
 function onResize() {
     'use strict';
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(window.innerWidth, window.innerHeight);  
+    perspectiveCamera.aspect = window.innerWidth / window.innerHeight;
+    perspectiveCamera.updateProjectionMatrix();
+    pauseCamera.aspect = window.innerWidth / window.innerHeight;
+    pauseCamera.updateProjectionMatrix();
 }
 
 function resetScene() {
@@ -199,11 +203,19 @@ function resetScene() {
     iKey = false;
     pKey = false;
     wKey = false;
+    renderer.clearDepth();
+    camera = perspectiveCamera;
+    renderer.render(scene, camera);
     clock.start();
 }
 
 function render() {
     'use strict';
+
+    renderer.autoClear = false;
+    renderer.clear();
+    renderer.render(scene, camera);
+
     if (iKey) {
         if (phong)
             switchMaterial(0);
@@ -214,24 +226,56 @@ function render() {
         iKey = !iKey;
     }
     var delta = clock.getDelta();
-    if (sKey)
+    if (sKey) {
+        renderer.clearDepth();
+        camera = perspectiveCamera;
+        renderer.render(scene, camera);
         obj.rotation.y += 1.2 * delta;
+    }
+    else {
+        renderer.clearDepth();
+        camera = pauseCamera;
+        renderer.render(pauseScene, camera);
+        camera.lookAt(pauseScene.position);
+        // pauseCamera.position.x = 0 * scale;
+        // pauseCamera.position.y = 0 * scale;
+        // pauseCamera.position.z = 100 * scale;
+        // pauseCamera.left = camera.left;
+        // pauseCamera.right = camera.right;
+        // pauseCamera.top = camera.top;
+        // pauseCamera.bottom = camera.bottom;
+    }
     if (bKey && sKey)
         ballRotation(delta);
+    
+    controls.update();
 }
 
 function init() {
     'use strict';
+    camera = new THREE.Camera();
     clock = new THREE.Clock();
+    var cubeShader = THREE.ShaderLib.cube;
+    cubeShader.uniforms.tCube.value = cubeTexture;
+    cubeShader.uniforms.opacity.value = 1;
+    var skyboxMaterial = new THREE.ShaderMaterial({
+        fragmentShader: cubeShader.fragmentShader,
+        vertexShader: cubeShader.vertexShader,
+        uniforms: cubeShader.uniforms,
+        side: THREE.BackSide
+    });
+    skybox = new THREE.Mesh(new THREE.BoxBufferGeometry(10000, 10000, 10000), skyboxMaterial);
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
     createScene();
     createField();
     createCamera();
+    createPauseScene();
     createBall();
     createFlag();
     render();
+    scene.add(skybox);
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("resize", onResize);
 }
@@ -289,13 +333,27 @@ function animate() {
     }
     else if (!sKey && clock.running) {
         clock.stop();
-        showWarning();
         if (rKey)
             resetScene();
     }
 
     render();
     requestAnimationFrame(animate);
-    // controls.update();
-    renderer.render(scene, camera);
 }
+
+
+
+// var materialArray = [];
+// materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'images/dawnmountain-xpos.png' ) }));
+// materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'images/dawnmountain-xneg.png' ) }));
+// materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'images/dawnmountain-ypos.png' ) }));
+// materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'images/dawnmountain-yneg.png' ) }));
+// materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'images/dawnmountain-zpos.png' ) }));
+// materialArray.push(new THREE.MeshBasicMaterial( { map: THREE.ImageUtils.loadTexture( 'images/dawnmountain-zneg.png' ) }));
+// for (var i = 0; i < 6; i++)
+//    materialArray[i].side = THREE.BackSide;
+// var skyboxMaterial = new THREE.MeshFaceMaterial( materialArray );
+// var skyboxGeom = new THREE.CubeGeometry( 5000, 5000, 5000, 1, 1, 1 );
+// var skybox = new THREE.Mesh( skyboxGeom, skyboxMaterial );
+// scene.add( skybox );
+
